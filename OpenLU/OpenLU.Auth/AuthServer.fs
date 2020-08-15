@@ -13,5 +13,5 @@ type AuthServer() =
     override this.HandlePacket ipep data =
         Console.WriteLine("received packet from {0}:{1} with id {2}",ipep.Address,ipep.Port,data.[0]);
     
-    interface IAuthService with
+    interface IAuthServerService with
         member this.Start() = this.StartServer()

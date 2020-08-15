@@ -10,7 +10,7 @@ open OpenLU.Auth
 open OpenLU.Services
 [<EntryPoint>]
 let main argv =
-    let authService : IAuthService = AuthServer() :> IAuthService
-    authService.Start()
+    let lu = LegoUniverse(AuthServer())
+    lu.Start()
     Console.ReadKey() |> ignore
     0

@@ -6,11 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="OpenLU.Services\IAuthServer.fs" />
+    <Compile Include="OpenLU.Services\IAuthServerService.fs" />
     <Compile Include="Core\LegoUniverse.fs" />
     <Compile Include="Core\Events.fs" />
     <Compile Include="Core\LUServer.fs" />
-    <Compile Include="OpenLU.Auth\Auth.fs" />
+    <Compile Include="OpenLU.Auth\AuthServer.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

@@ -13,6 +13,7 @@ type LUServer(port : int, password : string) as this =
     let  _port = port
     let  _password = password
     let mutable  _server : IRakNetServer = null
+
     member this.Port with get() = _port
     member this.Password with get() = _password
     member this.Server with get() = _server and set(v : IRakNetServer) = _server <- v
@@ -26,9 +27,11 @@ type LUServer(port : int, password : string) as this =
         Console.WriteLine("{0}:{1} connected",ipep.Address,ipep.Port);
     default this.Disconnection ipep =
         Console.WriteLine("{0}:{1} disconnecteed",ipep.Address,ipep.Port)
+
     member this.OnNewConnection : NewConnectionEvent = NewConnectionEvent(this.NewConnection)
     member this.OnHandlePacket : HandlePacketEvent = HandlePacketEvent(this.HandlePacket)
     member this.OnDisconnect : DisconnectionEvent = DisconnectionEvent(this.Disconnection)
+
     default this.StartServer() =
         Console.WriteLine("Starting server")
         this.Server <- RakNetServer(this.Port,this.Password) :> IRakNetServer
