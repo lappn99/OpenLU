@@ -13,7 +13,7 @@ type LUServer(port : int, password : string) as this =
     let  _port = port
     let  _password = password
     let mutable  _server : IRakNetServer = null
-
+    
     member this.Port with get() = _port
     member this.Password with get() = _password
     member this.Server with get() = _server and set(v : IRakNetServer) = _server <- v
