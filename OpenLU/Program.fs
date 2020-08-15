@@ -5,10 +5,12 @@ open System.IO
 open System.Net
 open System.Net.Sockets
 open System.Threading
-open LegoUniverse.Networking
+open OpenLU.Core
+open OpenLU.Auth
+open OpenLU.Services
 [<EntryPoint>]
 let main argv =
-   let server = Server(1001)
-   server.StartServer()
-   Console.ReadKey() |> ignore
-   0
+    let authService : IAuthService = AuthServer() :> IAuthService
+    authService.Start()
+    Console.ReadKey() |> ignore
+    0
