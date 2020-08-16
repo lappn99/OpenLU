@@ -7,10 +7,12 @@
 
   <ItemGroup>
     <Compile Include="OpenLU.Services\IAuthServerService.fs" />
+    <Compile Include="Core\Enums\LUPacketHeader.fs" />
     <Compile Include="Core\LUPacket.fs" />
     <Compile Include="Core\LegoUniverse.fs" />
     <Compile Include="Core\Events.fs" />
     <Compile Include="Core\LUServer.fs" />
+    <Compile Include="OpenLU.World\WorldServer.fs" />
     <Compile Include="OpenLU.Auth\AuthServer.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
