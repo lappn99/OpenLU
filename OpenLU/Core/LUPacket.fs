@@ -2,13 +2,14 @@
 
 open System
 open RakDotNet
-
+open OpenLU.Core.Enums
 type LUPacket = 
      struct
-        val Header : uint64
+        val Header : LUPacketHeader
         val Body : BitStream
         new(data : byte[]) = {
-            Header = BitConverter.ToUInt64(data.[0..7],0)
+            
+            Header = enum<LUPacketHeader>(BitConverter.ToInt32(data.[0..3], 0))
             Body = BitStream(data.[8..])
         }
      end

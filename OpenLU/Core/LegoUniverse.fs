@@ -6,7 +6,6 @@ type LegoUniverse(authService : IAuthServerService, worldService: IWorldServerSe
     let _authService : IAuthServerService = authService
     let _worldService : IWorldServerService = worldService
 
-
     member this.AuthService with get() = _authService
     member this.WorldService with get() = _worldService
 
