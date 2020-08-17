@@ -7,7 +7,8 @@ module Services =
     
     type IWorldServerService = 
         abstract member Start : unit ->unit
-
+    type IDatabasebaseService =
+        abstract member Start : unit -> unit
     module ServiceProvider = 
         let private serviceInitialization() = 
             lazy ServiceCollection()

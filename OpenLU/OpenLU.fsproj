@@ -6,8 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="Services.json" />
+    <Content Include="cfg.json" />
+    <Compile Include="ConfigurationProvider.fs" />
     <Compile Include="Services.fs" />
+    <Compile Include="LUDatabase.fs" />
     <Compile Include="CoreTypes.fs" />
     <Compile Include="LegoUniverse.fs" />
     <Compile Include="Servers.fs" />
@@ -18,6 +20,8 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.7" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.7" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.7" />
+    <PackageReference Include="MySql.Data" Version="8.0.21" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,7 +31,7 @@
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="copy $(ProjectDir)Services.json $(ProjectDir)$(OutDir)" />
+    <Exec Command="copy $(ProjectDir)cfg.json $(ProjectDir)$(OutDir)" />
   </Target>
 
 </Project>

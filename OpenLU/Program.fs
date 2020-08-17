@@ -8,12 +8,13 @@ open OpenLU.LegoUniverse
 open OpenLU.Servers
 open OpenLU.Services.ServiceProvider
 open OpenLU.Services
+
 [<EntryPoint>]
 let main argv =
     
     Services.ServiceProvider.RegisterService<IAuthServerService>(AuthServer())
     Services.ServiceProvider.RegisterService<IWorldServerService>(WorldServer())
-    
+    Services.ServiceProvider.RegisterService<IDatabasebaseService>(LUDatabase.MySqlProvider())
     LegoUniverse.Start()
     
     Console.ReadKey() |> ignore
