@@ -6,7 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="TODO.md" />
     <None Include="Services.json" />
     <Compile Include="Services.fs" />
     <Compile Include="CoreTypes.fs" />
