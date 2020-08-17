@@ -6,15 +6,17 @@ Find similar projects here
 
 https://lusprojects.github.io/
 
-Thanks to <a href= "https://github.com/Wincent01">Wincent01</a> and <a href = "https://github.com/yuwui">yuwui</a> for developing tools such as <a href="https://github.com/yuwui/RakDotNet">RakDotNet</a> and <a href="https://github.com/Wincent01/InfectedRose">InfectedRose</a> to make my life easier
+Thanks to [Wincent01](https://github.com/Wincent01)  and [yuwui](https://github.com/yuwui) for developing tools such as [RakDotNet](https://github.com/yuwui/RakDotNet) and [InfectedRose](https://github.com/Wincent01/InfectedRose) to make my life easier
 
-TODO
-----
+## TODO
 * Documentation
 * Comments
 * Refactor by putting packet structures as their own type
 
-Database
--------
+## Database
 Uses MySql for the database later on I hope to make the SQL Provider up to the user but thats not a focus right now
-so for now to use it you need 
+so for now to use it you need MySQL
+#### Configuring Database
+1. Install MySql
+2. Create file called "cfg.json" in project root (where OpenLU.fsproj is)
+3. Add the following key/value pair `connectionString:{string}`
