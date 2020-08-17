@@ -6,20 +6,15 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Configuration
 open OpenLU.LegoUniverse
 open OpenLU.Servers
+open OpenLU.Services.ServiceProvider
+open OpenLU.Services
 [<EntryPoint>]
 let main argv =
     
-    let authServer = AuthServer()
-    let worldServer = WorldServer()
+    Services.ServiceProvider.RegisterService<IAuthServerService>(AuthServer())
+    Services.ServiceProvider.RegisterService<IWorldServerService>(WorldServer())
     
-    let lu = LegoUniverse(authServer,worldServer)
-    lu.Start()
+    LegoUniverse.Start()
     
-    (*serviceCollection.AddSingleton<LegoUniverse>() |> ignore
-    serviceCollection.AddSingleton<IAuthServerService,AuthServer>() |> ignore
-    serviceCollection.AddSingleton<IWorldServerService,WorldServer>() |> ignore
-    let serviceProvider = serviceCollection.BuildServiceProvider(true)
-    let scope = serviceProvider.CreateScope()
-    scope.ServiceProvider.GetRequiredService<LegoUniverse>().Start()*)
     Console.ReadKey() |> ignore
     0

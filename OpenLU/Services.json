@@ -1,5 +1,5 @@
 ﻿{
-  "services" : [
+  "services": [
     {
       "service": "OpenLU.Services.IAuthServerService",
       "implementation": "OpenLU.Servers.AuthServer"

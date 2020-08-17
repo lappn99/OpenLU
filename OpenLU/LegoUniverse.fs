@@ -1,21 +1,10 @@
 ﻿namespace OpenLU
 open OpenLU.Services
-type LegoUniverse = {AuthService : IAuthServerService; WorldService : IWorldServerService}
+open OpenLU.Services
 
 module LegoUniverse = 
-
-
-
-    type LegoUniverse(authService : IAuthServerService, worldService: IWorldServerService) as this =
-    
-        let _authService : IAuthServerService = authService
-        let _worldService : IWorldServerService = worldService
-
-        member this.AuthService with get() = _authService
-        member this.WorldService with get() = _worldService
-
-        member this.Start() =
-            this.AuthService.Start()
-            this.WorldService.Start()
+    let Start() =
+        ServiceProvider.GetService<IAuthServerService>().Start(
+        ServiceProvider.GetService<IWorldServerService>().Start()
         
 
