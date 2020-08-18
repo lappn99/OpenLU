@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-
+using OpenLU.Configuration;
 namespace OpenLU.DBContext
 {
     public class MySqlContext : BaseContext
@@ -10,7 +10,7 @@ namespace OpenLU.DBContext
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseMySql("server=localhost;database=openlu;user id=lappn;password=admin;persistsecurityinfo=True;port=3306");
+            optionsBuilder.UseMySql(ConfigurationProvider.GetConfig()["connectionString"]);
         }
     }
 }

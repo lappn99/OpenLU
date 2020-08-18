@@ -339,3 +339,4 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 /OpenLU/cfg.json
+/OpenLU.Configuration/cfg.json

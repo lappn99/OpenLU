@@ -6,8 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="cfg.json" />
-    <Compile Include="ConfigurationProvider.fs" />
     <Compile Include="Services.fs" />
     <Compile Include="LUDatabase.fs" />
     <Compile Include="CoreTypes.fs" />
@@ -33,9 +31,5 @@
       <HintPath>..\RakDotNet\RakDotNet\bin\Debug\netstandard2.0\RakDotNet.dll</HintPath>
     </Reference>
   </ItemGroup>
-
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="copy $(ProjectDir)cfg.json $(ProjectDir)$(OutDir)" />
-  </Target>
 
 </Project>
