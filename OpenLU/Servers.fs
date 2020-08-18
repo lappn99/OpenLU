@@ -9,7 +9,9 @@ open CoreTypes.Events
 open Services
 open RakDotNet.RakNet
 open System.Diagnostics
-
+open OpenLU.Services
+open System.Linq
+open OpenLU.CoreTypes.Enums
 module rec Servers = 
     [<AbstractClass>]
     type LUServer(port : int, password : string,name : string) as this =
@@ -90,12 +92,22 @@ module rec Servers =
     end
     module AuthServer = 
         let clientLogin (authServer : AuthServer) (ipep : IPEndPoint) (packet : LUPacket) =
+            let users = ServiceProvider.GetService<IDatabasebaseService>().GetContext().Users
             let username = packet.Body.ReadString(33,true)
             let pwd = packet.Body.ReadString(41,true)
             Console.WriteLine("Login with Username: {0} and Password {1}",username,pwd)
             let response = BitStream()
             response.WriteUInt64((uint64)LUPacketHeader.LoginResponse)
-            response.WriteByte((byte)0x01)
+            let userExsists = query{
+                for student in users do
+                    select (student.Username, student.Password)
+                    contains (username,pwd)
+
+            }
+
+            let loginResult = if userExsists then LoginResponse.SUCCESS else LoginResponse.INVALID_LOGIN_INFO
+
+            response.WriteByte((byte)loginResult)
             response.WriteString("Talk_Like_A_Pirate")
             response.WriteString("",33*7)
             response.WriteUShort((uint16)1)

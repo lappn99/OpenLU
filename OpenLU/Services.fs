@@ -1,6 +1,7 @@
 ﻿namespace OpenLU
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Configuration
+open OpenLU.DBContext
 module Services = 
     type IAuthServerService =
         abstract member Start : unit -> unit
@@ -8,7 +9,7 @@ module Services =
     type IWorldServerService = 
         abstract member Start : unit ->unit
     type IDatabasebaseService =
-        abstract member Start : unit -> unit
+        abstract member GetContext : unit -> BaseContext
     module ServiceProvider = 
         let private serviceInitialization() = 
             lazy ServiceCollection()

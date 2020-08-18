@@ -14,7 +14,7 @@ let main argv =
     
     Services.ServiceProvider.RegisterService<IAuthServerService>(AuthServer())
     Services.ServiceProvider.RegisterService<IWorldServerService>(WorldServer())
-    Services.ServiceProvider.RegisterService<IDatabasebaseService>(LUDatabase.MySqlProvider())
+    Services.ServiceProvider.RegisterService<IDatabasebaseService>(LUDatabase())
     LegoUniverse.Start()
     
     Console.ReadKey() |> ignore
