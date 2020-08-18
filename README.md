@@ -20,4 +20,4 @@ so for now to use it you need MySQL
 1. Install MySql
 2. Create file called "cfg.json" in OpenLU.Configuration root (where OpenLU.Configuration.fsproj is)
 3. Add the following key/value pair `connectionString:{string}`
-4. run `dotnet ef database update` inside a developer console this should update the database (Ill simplify this process later)
+4. In OpenLU.DBContext run `dotnet ef database update` inside a developer console this should update the database (Ill simplify this process later)
