@@ -23,7 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OpenLU.DBContext\OpenLU.DBContext.csproj" />
-    <ProjectReference Include="..\OpenLU.EF\OpenLU.Models.fsproj" />
+    <ProjectReference Include="..\OpenLU.Models\OpenLU.Models.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -5,11 +5,11 @@ VisualStudioVersion = 16.0.29324.140
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "OpenLU", "OpenLU\OpenLU.fsproj", "{6FD269AD-6C23-460C-912C-23B6732AAA54}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "OpenLU.Models", "OpenLU.EF\OpenLU.Models.fsproj", "{878FEE7A-76F7-489E-97BD-7895D820BCBC}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenLU.DBContext", "OpenLU.DBContext\OpenLU.DBContext.csproj", "{CD9665E5-9DE8-4C4E-9D7D-EE0D1D6A10BA}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "OpenLU.Configuration", "OpenLU.Configuration\OpenLU.Configuration.fsproj", "{9FBD6C64-F0CE-414C-AD1D-6BBBFB1A0C1D}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "OpenLU.Models", "OpenLU.Models\OpenLU.Models.fsproj", "{6A9F992D-D205-4C8E-A640-84FF8B3C92BE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,10 +21,6 @@ Global
 		{6FD269AD-6C23-460C-912C-23B6732AAA54}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6FD269AD-6C23-460C-912C-23B6732AAA54}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6FD269AD-6C23-460C-912C-23B6732AAA54}.Release|Any CPU.Build.0 = Release|Any CPU
-		{878FEE7A-76F7-489E-97BD-7895D820BCBC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{878FEE7A-76F7-489E-97BD-7895D820BCBC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{878FEE7A-76F7-489E-97BD-7895D820BCBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{878FEE7A-76F7-489E-97BD-7895D820BCBC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{CD9665E5-9DE8-4C4E-9D7D-EE0D1D6A10BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{CD9665E5-9DE8-4C4E-9D7D-EE0D1D6A10BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CD9665E5-9DE8-4C4E-9D7D-EE0D1D6A10BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -33,6 +29,10 @@ Global
 		{9FBD6C64-F0CE-414C-AD1D-6BBBFB1A0C1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9FBD6C64-F0CE-414C-AD1D-6BBBFB1A0C1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9FBD6C64-F0CE-414C-AD1D-6BBBFB1A0C1D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A9F992D-D205-4C8E-A640-84FF8B3C92BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A9F992D-D205-4C8E-A640-84FF8B3C92BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A9F992D-D205-4C8E-A640-84FF8B3C92BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A9F992D-D205-4C8E-A640-84FF8B3C92BE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

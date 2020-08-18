@@ -18,7 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OpenLU.Configuration\OpenLU.Configuration.fsproj" />
-    <ProjectReference Include="..\OpenLU.EF\OpenLU.Models.fsproj" />
+    <ProjectReference Include="..\OpenLU.Models\OpenLU.Models.fsproj" />
   </ItemGroup>
 
 </Project>
