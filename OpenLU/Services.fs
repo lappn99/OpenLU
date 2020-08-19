@@ -2,6 +2,9 @@
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Configuration
 open OpenLU.DBContext
+open System
+open System.Net
+open OpenLU.CoreTypes
 module Services = 
     type IAuthServerService =
         abstract member Start : unit -> unit
@@ -10,6 +13,9 @@ module Services =
         abstract member Start : unit ->unit
     type IDatabasebaseService =
         abstract member GetContext : unit -> BaseContext
+    type ISessionService =
+        abstract member NewSession : string * Session -> unit
+        abstract member GetSession : string -> Option<Session>
     module ServiceProvider = 
         let private serviceInitialization() = 
             lazy ServiceCollection()

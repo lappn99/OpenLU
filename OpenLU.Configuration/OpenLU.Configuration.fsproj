@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="copy $(ProjectDir)cfg.json $(ProjectDir)$(OutDir)" />
+    <Exec Command="copy $(ProjectDir)cfg.json $(ProjectDir)$(OutDir)&#xD;&#xA;copy $(ProjectDir)cfg.json $(ProjectDir)..\OpenLU.DbContext\bin\Debug\netcoreapp3.1\" />
   </Target>
 
 </Project>

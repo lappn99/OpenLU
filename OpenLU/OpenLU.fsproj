@@ -6,9 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Services.fs" />
-    <Compile Include="LUDatabase.fs" />
     <Compile Include="CoreTypes.fs" />
+    <Compile Include="Services.fs" />
+    <Compile Include="SessionCache.fs" />
+    <Compile Include="LUDatabase.fs" />
     <Compile Include="LegoUniverse.fs" />
     <Compile Include="Servers.fs" />
     <Compile Include="Program.fs" />

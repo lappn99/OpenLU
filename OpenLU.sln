@@ -4,10 +4,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.29324.140
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "OpenLU", "OpenLU\OpenLU.fsproj", "{6FD269AD-6C23-460C-912C-23B6732AAA54}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9FBD6C64-F0CE-414C-AD1D-6BBBFB1A0C1D} = {9FBD6C64-F0CE-414C-AD1D-6BBBFB1A0C1D}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenLU.DBContext", "OpenLU.DBContext\OpenLU.DBContext.csproj", "{CD9665E5-9DE8-4C4E-9D7D-EE0D1D6A10BA}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "OpenLU.Configuration", "OpenLU.Configuration\OpenLU.Configuration.fsproj", "{9FBD6C64-F0CE-414C-AD1D-6BBBFB1A0C1D}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "OpenLU.Configuration", "OpenLU.Configuration\OpenLU.Configuration.fsproj", "{9FBD6C64-F0CE-414C-AD1D-6BBBFB1A0C1D}"
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "OpenLU.Models", "OpenLU.Models\OpenLU.Models.fsproj", "{6A9F992D-D205-4C8E-A640-84FF8B3C92BE}"
 EndProject

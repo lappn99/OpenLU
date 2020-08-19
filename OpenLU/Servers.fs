@@ -12,17 +12,18 @@ open System.Diagnostics
 open OpenLU.Services
 open System.Linq
 open OpenLU.CoreTypes.Enums
+open Microsoft.FSharp.Collections
 module rec Servers = 
     [<AbstractClass>]
     type LUServer(port : int, password : string,name : string) as this =
         
-            let _handlerMap :Dictionary<LUPacketHeader,Delegate> = Dictionary<LUPacketHeader,Delegate>()
+            let mutable _handlerMap : Map<LUPacketHeader,Delegate> = Map.empty
             
             let mutable  _server : IRakNetServer = null
             do
-                _handlerMap.Add(LUPacketHeader.HandShake,new HandshakeEvent(this.Handshake))
+                _handlerMap <- _handlerMap.Add(LUPacketHeader.HandShake,new ClientPacketEvent(this.Handshake))
         
-            member  this.HandlerMap with get() = _handlerMap
+            member  this.HandlerMap with get() = _handlerMap and set(v : Map<LUPacketHeader,Delegate>) = _handlerMap <- v 
             member this.Port with get() = port
             member this.Password with get() = password
             member this.Server with get() = _server and set(v : IRakNetServer) = _server <- v
@@ -81,7 +82,7 @@ module rec Servers =
     type AuthServer() as this = class
         inherit LUServer(1001,"3.25 ND1","Auth Server")
         do
-            this.HandlerMap.Add(LUPacketHeader.ClientLogin ,new LoginEvent(this.ClientLogin))
+            this.HandlerMap <- this.HandlerMap.Add(LUPacketHeader.ClientLogin ,new ClientPacketEvent(this.ClientLogin))
 
         member this.ClientLogin (ipep : IPEndPoint) (packet : LUPacket) = AuthServer.clientLogin this ipep packet
 
@@ -104,9 +105,7 @@ module rec Servers =
                     contains (username,pwd)
 
             }
-
             let loginResult = if userExsists then LoginResponse.SUCCESS else LoginResponse.INVALID_LOGIN_INFO
-
             response.WriteByte((byte)loginResult)
             response.WriteString("Talk_Like_A_Pirate")
             response.WriteString("",33*7)
@@ -114,8 +113,8 @@ module rec Servers =
             response.WriteUShort((uint16)10)
             response.WriteUShort((uint16)64)
             let userkey = String.Concat(Guid.NewGuid().ToString().ToCharArray(0,20))
-            Console.WriteLine("New user of : {0}",userkey)
-            response.WriteString(userkey,wide = true)
+            Console.WriteLine("New user with key of : {0}",userkey)
+            response.WriteString(userkey.ToString(),wide = true)
             response.WriteString("127.0.0.1")
             response.WriteString("127.0.0.1")
             response.WriteUShort((uint16)2002)
@@ -133,6 +132,16 @@ module rec Servers =
             response.WriteInt((int32)4)
             authServer.Server.Send(response,ipep)
 
+            if(loginResult = LoginResponse.SUCCESS) then
+                let userId = query{
+                    for user in users do
+                        where(user.Username = username && user.Password = pwd)
+                        select user.Id
+                        exactlyOne
+                }
+                ServiceProvider.GetService<ISessionService>().NewSession(userkey,{IPeP = ipep; UserId = userId})
+            Console.WriteLine("Auth finished")
+
         let handShake (authServer : AuthServer) (ipep: IPEndPoint) (packet : LUPacket) =
             let response = BitStream()
             let client_version = packet.Body.ReadUInt32()
@@ -148,6 +157,21 @@ module rec Servers =
 
     type WorldServer() as this = class
         inherit LUServer(2002,"3.25 ND1","World Server")
+        do
+            this.HandlerMap <- this.HandlerMap.Add(LUPacketHeader.UserSessionInfo,new ClientPacketEvent(this.UserSessionInfo))
+        member this.UserSessionInfo (ipep) (packet) = WorldServer.userSessionInfo this ipep packet
         interface IWorldServerService with
             member this.Start() = this.StartServer()
     end
+    module WorldServer = 
+        let userSessionInfo (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
+            let username = packet.Body.ReadString(wide = true)
+            let key = packet.Body.ReadString(wide = true)
+            let hash = packet.Body.ReadString(32)
+            
+            let session = ServiceProvider.GetService<ISessionService>().GetSession(key)
+            match session with 
+                | Some(session) -> Console.WriteLine("User logged in with session id: {0}", key)
+                | None -> Console.WriteLine("Session not found: {0}",key)
+
+

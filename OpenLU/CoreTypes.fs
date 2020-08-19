@@ -1,8 +1,9 @@
 ﻿namespace OpenLU
 open RakDotNet
 open System
+open System.Net
 
-module CoreTypes =
+module rec CoreTypes =
     module Enums =
 
         type LUPacketHeader =
@@ -27,6 +28,16 @@ module CoreTypes =
                Body = BitStream(data.[8..])
            }
         end
+    
+    
+    type Session = 
+       {IPeP : IPEndPoint 
+        UserId : int } 
+            
+           
+    
+
+        
     module Events =
         open System.Net
         
@@ -35,6 +46,10 @@ module CoreTypes =
         type HandlePacketEvent = delegate of IPEndPoint * byte[] ->unit
         type DisconnectionEvent = delegate of IPEndPoint -> unit
         
+        type ClientPacketEvent = delegate of IPEndPoint * LUPacket -> unit
+
         type HandshakeEvent = delegate of IPEndPoint * LUPacket -> unit
         type LoginEvent = delegate of IPEndPoint * LUPacket -> unit
+        
+
 
