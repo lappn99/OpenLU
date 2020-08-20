@@ -7,12 +7,13 @@ namespace OpenLU.DBContext
 {
     public abstract class BaseContext : DbContext, IAsyncDisposable
     {
-        public DbSet<User> Users { get; set; }
+        public DbSet<GameModels.User> Users { get; set; }
+        public DbSet<GameModels.Character> Characters { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
-            modelBuilder.Entity<User>().HasIndex(u => u.Password).IsUnique();
+            modelBuilder.Entity<GameModels.User>().HasIndex(u => u.Username).IsUnique();
+            modelBuilder.Entity<GameModels.User>().HasIndex(u => u.Password).IsUnique();
         }
     }
 }

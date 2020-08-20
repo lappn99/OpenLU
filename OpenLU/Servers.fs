@@ -68,15 +68,15 @@ module rec Servers =
             server.Server.Send(response,ipep) |> ignore
 
         let newConnection server (ipep : IPEndPoint) = 
-            Console.WriteLine("{0}:{1} connected",ipep.Address,ipep.Port);
+            Console.WriteLine("{0}:{1} connected to {2}",ipep.Address,ipep.Port,server.Name);
 
         let disconnection server (ipep : IPEndPoint) =
-            Console.WriteLine("{0}:{1} disconnecteed",ipep.Address,ipep.Port)
+            Console.WriteLine("{0}:{1} disconnected from {2}",ipep.Address,ipep.Port,server.Name)
 
         let handlePacket server (ipep : IPEndPoint) (data : byte[]) = 
             let luPacket = LUPacket(data)
-            
-            Console.WriteLine("Receivid user packet: {0}", luPacket.Header)
+            Console.WriteLine("Packet recieved: {0}",luPacket.Header)
+
             server.HandlerMap.[luPacket.Header].DynamicInvoke(ipep,luPacket) |> ignore
 
     type AuthServer() as this = class
@@ -105,7 +105,11 @@ module rec Servers =
                     contains (username,pwd)
 
             }
-            let loginResult = if userExsists then LoginResponse.SUCCESS else LoginResponse.INVALID_LOGIN_INFO
+            let loginResult = 
+                match userExsists with 
+                    |true -> LoginResponse.SUCCESS
+                    |false -> LoginResponse.INVALID_LOGIN_INFO
+
             response.WriteByte((byte)loginResult)
             response.WriteString("Talk_Like_A_Pirate")
             response.WriteString("",33*7)
@@ -113,7 +117,7 @@ module rec Servers =
             response.WriteUShort((uint16)10)
             response.WriteUShort((uint16)64)
             let userkey = String.Concat(Guid.NewGuid().ToString().ToCharArray(0,20))
-            Console.WriteLine("New user with key of : {0}",userkey)
+            
             response.WriteString(userkey.ToString(),wide = true)
             response.WriteString("127.0.0.1")
             response.WriteString("127.0.0.1")
@@ -155,14 +159,18 @@ module rec Servers =
             response.WriteString("127.0.0.1",33)
             authServer.Server.Send(response,ipep) |> ignore
 
+
     type WorldServer() as this = class
         inherit LUServer(2002,"3.25 ND1","World Server")
         do
             this.HandlerMap <- this.HandlerMap.Add(LUPacketHeader.UserSessionInfo,new ClientPacketEvent(this.UserSessionInfo))
+            this.HandlerMap <- this.HandlerMap.Add(LUPacketHeader.MinifigListRequest,new ClientPacketEvent(this.MinifigListRequest))
         member this.UserSessionInfo (ipep) (packet) = WorldServer.userSessionInfo this ipep packet
+        member this.MinifigListRequest (ipep) (packet) = WorldServer.minifigListRequest this ipep packet
         interface IWorldServerService with
             member this.Start() = this.StartServer()
     end
+
     module WorldServer = 
         let userSessionInfo (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
             let username = packet.Body.ReadString(wide = true)
@@ -173,5 +181,11 @@ module rec Servers =
             match session with 
                 | Some(session) -> Console.WriteLine("User logged in with session id: {0}", key)
                 | None -> Console.WriteLine("Session not found: {0}",key)
+        let minifigListRequest (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
+            let response = BitStream()
+            response.WriteUInt64((uint64)LUPacketHeader.MinifigListResponse)
+            response.WriteUInt8((byte)0)
+            response.WriteUInt8((byte)0)
+            worldServer.Server.Send(response)
 
 

@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="GameTypes.fs" />
     <Compile Include="CoreTypes.fs" />
     <Compile Include="Services.fs" />
     <Compile Include="SessionCache.fs" />

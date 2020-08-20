@@ -3,19 +3,25 @@ open Microsoft.FSharp.Collections
 open OpenLU.CoreTypes
 open System
 open OpenLU.Services
+open System.Collections
+open System.Linq
 type SessionCache() = 
-    let mutable _sessions : Map<string,Session> = Map.empty
+    let mutable _sessions : Map<Guid,Session> = Map.empty
     
     member this.Sessions with get() = _sessions and set(v) = _sessions <- v
 
     interface ISessionService with 
-            member this.NewSession(key,session) = 
-                this.Sessions <- this.Sessions.Add(key,session)
+            member this.NewSession(guid,session) = 
+                this.Sessions <- this.Sessions.Add(guid,session)
             
-            member this.GetSession(key) = 
-                 match this.Sessions.ContainsKey(key) with
-                    | true -> Some(this.Sessions.[key])
+            member this.GetSession(guid) = 
+                 match this.Sessions.ContainsKey(guid) with
+                    | true -> Some(this.Sessions.[guid])
                     | false -> None
+            member this.FindByIP(ip) =
+                
+                
+
                         
 
                     
