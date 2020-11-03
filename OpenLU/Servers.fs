@@ -204,7 +204,7 @@ module rec Servers =
 
             worldServer.Server.Send(response)
         let writeMinifig (response :BitStream) (minifig: Character) =
-            response.WriteByte(0)
+            response.WriteInt(0)
         let minifigCreateRequest (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
             let db = ServiceProvider.GetService<IDatabasebaseService>().GetContext()
             let session = ServiceProvider.GetService<ISessionService>().FindByIp ipep
