@@ -13,6 +13,7 @@ module rec CoreTypes =
             | UserSessionInfo = 0x01000453
             | MinifigListRequest = 0x02000453
             | MinifigListResponse = 0x06000553
+            | MinifigCreateRequest = 0x03000453
         type LoginResponse =
              SUCCESS = 0x01
             | BANNED = 0x02
@@ -32,8 +33,14 @@ module rec CoreTypes =
     
     
     type Session = 
-       {IPeP : IPEndPoint 
-        UserId : int } 
+       {
+        
+        UserId : int
+        UserKey: string} 
+    
+    
+    
+   
 
     module Events =
         open System.Net

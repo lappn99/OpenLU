@@ -6,7 +6,7 @@ module rec GameModels =
         member val Id = 0 with get,set
         member val Username = "" with get,set
         member val Password = "" with get,set
-        member val Characters = List.empty<Character> with get,set
+        member val Characters = System.Collections.Generic.List<Character>() with get,set
         end
 
     type public Character() = class
@@ -30,6 +30,8 @@ module rec GameModels =
         member val UserId = 0 with get,set
         member val User : User = User() with get,set
         end
+
+
 
 
 

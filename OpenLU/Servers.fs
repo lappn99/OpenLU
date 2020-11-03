@@ -13,6 +13,7 @@ open OpenLU.Services
 open System.Linq
 open OpenLU.CoreTypes.Enums
 open Microsoft.FSharp.Collections
+open OpenLU.Models.GameModels
 module rec Servers = 
     [<AbstractClass>]
     type LUServer(port : int, password : string,name : string) as this =
@@ -143,7 +144,8 @@ module rec Servers =
                         select user.Id
                         exactlyOne
                 }
-                ServiceProvider.GetService<ISessionService>().NewSession(userkey,{IPeP = ipep; UserId = userId})
+                let session = {UserKey = userkey; UserId = userId}
+                ServiceProvider.GetService<ISessionService>().NewSession(ipep,session)
             Console.WriteLine("Auth finished")
 
         let handShake (authServer : AuthServer) (ipep: IPEndPoint) (packet : LUPacket) =
@@ -165,8 +167,10 @@ module rec Servers =
         do
             this.HandlerMap <- this.HandlerMap.Add(LUPacketHeader.UserSessionInfo,new ClientPacketEvent(this.UserSessionInfo))
             this.HandlerMap <- this.HandlerMap.Add(LUPacketHeader.MinifigListRequest,new ClientPacketEvent(this.MinifigListRequest))
+            this.HandlerMap <- this.HandlerMap.Add(LUPacketHeader.MinifigCreateRequest,new ClientPacketEvent(this.MinifigCreateRequest))
         member this.UserSessionInfo (ipep) (packet) = WorldServer.userSessionInfo this ipep packet
         member this.MinifigListRequest (ipep) (packet) = WorldServer.minifigListRequest this ipep packet
+        member this.MinifigCreateRequest  (ipep) (packet) = WorldServer.minifigCreateRequest this ipep packet
         interface IWorldServerService with
             member this.Start() = this.StartServer()
     end
@@ -177,15 +181,56 @@ module rec Servers =
             let key = packet.Body.ReadString(wide = true)
             let hash = packet.Body.ReadString(32)
             
-            let session = ServiceProvider.GetService<ISessionService>().GetSession(key)
+            let session = ServiceProvider.GetService<ISessionService>().FindByIp(ipep)
             match session with 
                 | Some(session) -> Console.WriteLine("User logged in with session id: {0}", key)
                 | None -> Console.WriteLine("Session not found: {0}",key)
         let minifigListRequest (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
             let response = BitStream()
             response.WriteUInt64((uint64)LUPacketHeader.MinifigListResponse)
+            let session = ServiceProvider.GetService<ISessionService>().FindByIp(ipep)
+            let minifigs = 
+                if session.IsSome then
+                    let db = ServiceProvider.GetService<IDatabasebaseService>().GetContext()
+                    db.Characters.Where(fun c -> c.UserId = session.Value.UserId).ToList() :> seq<Character>
+                else
+                    Seq.empty
+            
+            
+            response.WriteUInt8((byte)(Seq.length minifigs))
             response.WriteUInt8((byte)0)
-            response.WriteUInt8((byte)0)
+
+            Seq.iter(fun minifig -> writeMinifig response minifig) minifigs
+
             worldServer.Server.Send(response)
+        let writeMinifig (response :BitStream) (minifig: Character) =
+            response.WriteByte(0)
+        let minifigCreateRequest (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
+            let db = ServiceProvider.GetService<IDatabasebaseService>().GetContext()
+            let session = ServiceProvider.GetService<ISessionService>().FindByIp ipep
+            let newChar = new Character()
+            let response = BitStream()
+            
+       
+            let user=  query{
+                for user in db.Users do
+                    where(user.Id = session.Value.UserId)
+                    select user
+                    exactlyOne
+            }
+            packet.Body.ReadUInt32() |> ignore
+            packet.Body.ReadUInt32() |> ignore
+            packet.Body.ReadUInt32() |> ignore
+            newChar.ShirtColor <- packet.Body.ReadInt32()
+            newChar.ShirtStyle <- packet.Body.ReadInt32()
+            newChar.PantsColor <- packet.Body.ReadInt32()
+            newChar.HairStyle <- packet.Body.ReadInt32()
+            user.Characters.Add(newChar)
+            db.SaveChanges() |> ignore
+
+            response.WriteUInt8((byte)0)
+            worldServer.Server.Send(response,ipep)
+            minifigListRequest worldServer ipep packet
+            
 
 

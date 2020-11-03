@@ -14,9 +14,10 @@ module Services =
     type IDatabasebaseService =
         abstract member GetContext : unit -> BaseContext
     type ISessionService =
-        abstract member NewSession : Guid * Session -> unit
-        abstract member GetSession : Guid -> Option<Session>
+        abstract member NewSession : IPEndPoint * Session -> unit
+        
         abstract member FindByIp : IPEndPoint -> Option<Session>
+
     module ServiceProvider = 
         let private serviceInitialization() = 
             lazy ServiceCollection()

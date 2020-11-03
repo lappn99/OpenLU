@@ -9,7 +9,7 @@ module LUDatabase =
     let getContext() = 
         currentContext.Value
 
-type LUDatabase() as this =
+type LUDatabase() =
     interface IDatabasebaseService with
         member this.GetContext() = LUDatabase.getContext() :> BaseContext
     
