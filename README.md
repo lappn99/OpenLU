@@ -11,7 +11,7 @@ Thanks to [Wincent01](https://github.com/Wincent01)  and [yuwui](https://github.
 ## TODO
 * Documentation
 * Comments
-* Send minifig list to client
+* Load player in world
 
 ## Database
 Uses MySql for the database later on I hope to make the SQL Provider up to the user but thats not a focus right now
@@ -20,4 +20,6 @@ so for now to use it you need MySQL
 1. Install MySql
 2. Create file called "cfg.json" in OpenLU.Configuration root (where OpenLU.Configuration.fsproj is)
 3. Add the following key/value pair `connectionString:{string}`
-4. In OpenLU.DBContext run `dotnet ef database update` inside a developer console this should update the database (Ill simplify this process later)
+4. Add configuration for local Lego universe resource folder in the key/value pair 'luResources' : "path"
+    * Example: `"luResources": "D:\\Users\\Nathan\\Documents\\LU Complete Client\\LU Complete Client\\LEGO Universe\\client\\res"`
+5. In OpenLU.DBContext run `dotnet ef database update` inside a developer console this should update the database (Ill simplify this process later)
