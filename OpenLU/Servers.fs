@@ -14,6 +14,7 @@ open System.Linq
 open OpenLU.CoreTypes.Enums
 open Microsoft.FSharp.Collections
 open OpenLU.Models.GameModels
+open Replica
 module rec Servers = 
     [<AbstractClass>]
     type LUServer(port : int, password : string,name : string) as this =
@@ -72,6 +73,7 @@ module rec Servers =
             Console.WriteLine("{0}:{1} connected to {2}",ipep.Address,ipep.Port,server.Name);
 
         let disconnection server (ipep : IPEndPoint) =
+            
             Console.WriteLine("{0}:{1} disconnected from {2}",ipep.Address,ipep.Port,server.Name)
 
         let handlePacket server (ipep : IPEndPoint) (data : byte[]) = 
@@ -171,11 +173,19 @@ module rec Servers =
         member this.UserSessionInfo (ipep) (packet) = WorldServer.userSessionInfo this ipep packet
         member this.MinifigListRequest (ipep) (packet) = WorldServer.minifigListRequest this ipep packet
         member this.MinifigCreateRequest  (ipep) (packet) = WorldServer.minifigCreateRequest this ipep packet
+        override this.Disconnection  (ipep) = WorldServer.handleDisconnect this ipep
         interface IWorldServerService with
             member this.Start() = this.StartServer()
     end
 
     module WorldServer = 
+        
+        let handleDisconnect server ipep =
+            LUServer.disconnection server ipep
+            let sessionService = ServiceProvider.GetService<ISessionService>()
+            let sessionKey = sessionService.FindByIp ipep
+            if sessionService.RemoveSession(ipep) then
+                printfn "Session ended: %s" sessionKey.Value.UserKey
         let userSessionInfo (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
             let username = packet.Body.ReadString(wide = true)
             let key = packet.Body.ReadString(wide = true)
@@ -201,16 +211,37 @@ module rec Servers =
             response.WriteUInt8((byte)0)
 
             Seq.iter(fun minifig -> writeMinifig response minifig) minifigs
-
             worldServer.Server.Send(response)
         let writeMinifig (response :BitStream) (minifig: Character) =
-            response.WriteInt(0)
+            response.WriteInt64(minifig.Id)
+            response.WriteUInt32(uint32 0)
+            response.WriteString(minifig.Name, wide = true)
+            response.WriteString(minifig.DisplayName,wide = true)
+            response.WriteBool(false)
+            response.WriteBool(false)
+            response.WriteString("",10)
+            response.WriteUInt32(minifig.ShirtColor)
+            response.WriteUInt32(minifig.ShirtStyle)
+            response.WriteUInt32(minifig.PantsColor)
+            response.WriteUInt32(minifig.HairStyle)
+            response.WriteUInt32(minifig.HairColor)
+            response.WriteUInt32(minifig.LH)
+            response.WriteUInt32(minifig.RH)
+            response.WriteUInt32(minifig.Eyebrows)
+            response.WriteUInt32(minifig.Eyes)
+            response.WriteUInt32(minifig.Mouth)
+            response.WriteUInt32(uint32 0)
+            response.WriteUInt16(minifig.LastMapInstance)
+            response.WriteUInt32(minifig.LastMapClone)
+            response.WriteUInt64(minifig.LastLogin)
+            response.WriteUInt16(uint16 0)
+
         let minifigCreateRequest (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
             let db = ServiceProvider.GetService<IDatabasebaseService>().GetContext()
             let session = ServiceProvider.GetService<ISessionService>().FindByIp ipep
             let newChar = new Character()
             let response = BitStream()
-            
+            let resources = ServiceProvider.GetService<IResourceService>()
        
             let user=  query{
                 for user in db.Users do
@@ -218,15 +249,42 @@ module rec Servers =
                     select user
                     exactlyOne
             }
-            packet.Body.ReadUInt32() |> ignore
-            packet.Body.ReadUInt32() |> ignore
-            packet.Body.ReadUInt32() |> ignore
-            newChar.ShirtColor <- packet.Body.ReadInt32()
-            newChar.ShirtStyle <- packet.Body.ReadInt32()
-            newChar.PantsColor <- packet.Body.ReadInt32()
-            newChar.HairStyle <- packet.Body.ReadInt32()
-            user.Characters.Add(newChar)
-            db.SaveChanges() |> ignore
+            
+            
+            let firstNames = resources.ReadTextAsync("names/minifigname_first.txt") |> Async.RunSynchronously
+            let middleNames = resources.ReadTextAsync("names/minifigname_last.txt") |> Async.RunSynchronously
+            let lastNames = resources.ReadTextAsync("names/minifigname_last.txt") |> Async.RunSynchronously
+            
+            newChar.Id <- Replica.objectId
+            newChar.Name <- packet.Body.ReadString(33,wide = true)
+            let first = (firstNames.Split "\n").[int32 (packet.Body.ReadUInt32())]
+            let middle = (middleNames.Split "\n").[int32 (packet.Body.ReadUInt32())]
+            let last = (lastNames.Split "\n").[int32 (packet.Body.ReadUInt32())]
+            
+            newChar.DisplayName <- String.concat "" [first; middle; last;]
+            
+            packet.Body.ReadString(9,false) |> ignore
+            
+            newChar.ShirtColor <- packet.Body.ReadUInt32()
+            newChar.ShirtStyle <- packet.Body.ReadUInt32()
+            newChar.PantsColor <- packet.Body.ReadUInt32()
+            newChar.HairStyle <- packet.Body.ReadUInt32()
+            newChar.HairColor <- packet.Body.ReadUInt32()
+            newChar.LH <- packet.Body.ReadUInt32()
+            newChar.RH <- packet.Body.ReadUInt32()
+            newChar.Eyebrows <- packet.Body.ReadUInt32()
+            newChar.Eyes <- packet.Body.ReadUInt32()
+            newChar.Mouth <- packet.Body.ReadUInt32()
+            
+            packet.Body.ReadUInt8() |> ignore
+            (*newChar.LastMapInstance <- packet.Body.ReadUInt16()
+            newChar.LastMapClone <- packet.Body.ReadUInt32()
+            newChar.LastLogin <- packet.Body.ReadUInt64()*)
+            newChar.User <- user
+            
+            let char =db.Characters.Add(newChar) 
+            let numRows = db.SaveChanges()
+            printfn "Character added: %s" char.Entity.DisplayName
 
             response.WriteUInt8((byte)0)
             worldServer.Server.Send(response,ipep)

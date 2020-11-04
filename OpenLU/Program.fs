@@ -8,7 +8,7 @@ open OpenLU.LegoUniverse
 open OpenLU.Servers
 open OpenLU.Services.ServiceProvider
 open OpenLU.Services
-
+open OpenLU.LUResources
 [<EntryPoint>]
 let main argv =
     
@@ -16,6 +16,8 @@ let main argv =
     Services.ServiceProvider.RegisterService<IWorldServerService>(WorldServer())
     Services.ServiceProvider.RegisterService<IDatabasebaseService>(LUDatabase())
     Services.ServiceProvider.RegisterService<ISessionService>(SessionCache())
+    Services.ServiceProvider.RegisterService<IResourceService>(LocalResourceProvider())
+    let firstNames = ServiceProvider.GetService<IResourceService>().ReadTextAsync("names/minifigname_first.txt") |> Async.RunSynchronously
     LegoUniverse.Start()
     
     Console.ReadKey() |> ignore

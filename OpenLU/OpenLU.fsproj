@@ -6,9 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Extensions.fs" />
+    <Compile Include="Replica.fs" />
     <Compile Include="GameTypes.fs" />
     <Compile Include="CoreTypes.fs" />
     <Compile Include="Services.fs" />
+    <Compile Include="LUResources.fs" />
     <Compile Include="SessionCache.fs" />
     <Compile Include="LUDatabase.fs" />
     <Compile Include="LegoUniverse.fs" />

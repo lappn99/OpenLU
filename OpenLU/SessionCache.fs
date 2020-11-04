@@ -20,6 +20,8 @@ type SessionCache() =
                  match this.Sessions.ContainsKey(guid) with
                     | true -> Some(this.Sessions.[guid])
                     | false -> None
+            member this.RemoveSession ipep =
+                this.Sessions.Remove(ipep)
                 
              
                 

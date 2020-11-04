@@ -8,15 +8,17 @@ open OpenLU.CoreTypes
 module Services = 
     type IAuthServerService =
         abstract member Start : unit -> unit
-    
     type IWorldServerService = 
         abstract member Start : unit ->unit
     type IDatabasebaseService =
         abstract member GetContext : unit -> BaseContext
     type ISessionService =
         abstract member NewSession : IPEndPoint * Session -> unit
-        
         abstract member FindByIp : IPEndPoint -> Option<Session>
+        abstract member RemoveSession : IPEndPoint -> bool
+    type IResourceService =
+        abstract member ReadTextAsync : string -> Async<string>
+    
 
     module ServiceProvider = 
         let private serviceInitialization() = 
