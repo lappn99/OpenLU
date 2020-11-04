@@ -11,7 +11,7 @@ Thanks to [Wincent01](https://github.com/Wincent01)  and [yuwui](https://github.
 ## TODO
 * Documentation
 * Comments
-* Refactor by putting packet structures as their own type
+* Send minifig list to client
 
 ## Database
 Uses MySql for the database later on I hope to make the SQL Provider up to the user but thats not a focus right now
