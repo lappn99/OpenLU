@@ -10,7 +10,7 @@ module Services =
         abstract member Start : unit -> unit
     type IWorldServerService = 
         abstract member Start : unit ->unit
-    type IDatabasebaseService =
+    type IDatabaseService =
         abstract member GetContext : unit -> BaseContext
     type ISessionService =
         abstract member NewSession : IPEndPoint * Session -> unit
@@ -28,6 +28,7 @@ module Services =
         
         let RegisterService<'T when 'T : not struct>(implementation : 'T) =  
             currentCollection.Value.AddSingleton<'T>(implementation) |> ignore
+            
         
         let private serviceProviderInitialzation() =
             lazy currentCollection.Value.BuildServiceProvider()
@@ -36,6 +37,7 @@ module Services =
        
         let GetService<'T>() =
             currentProvider.Value.GetService<'T>()
+        
 
 
 
