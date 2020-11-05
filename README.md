@@ -23,7 +23,15 @@ This is a WIP and is still in very early stages, it is not "play" ready in any m
 ## Database
 Uses MySql for the database later on I hope to make the SQL Provider up to the user but thats not a focus right now
 so for now to use it you need MySQL
-#### Configuring Database
+
+### Pre requesites
+* .NET Core 3.1
+* MySQL
+* Entity Framework Core Tools
+   * [PackageManager Tools](https://docs.microsoft.com/en-us/ef/core/miscellaneous/cli/powershell)
+   * [CLI Tools](https://docs.microsoft.com/en-us/ef/core/miscellaneous/cli/dotnet)
+
+### Configuring Database
 1. Install MySql
 2. Create file called "cfg.json" in OpenLU.Configuration root (where OpenLU.Configuration.fsproj is)
 3. Add the following key/value pair `connectionString:{string}`
