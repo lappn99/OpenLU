@@ -1,3 +1,6 @@
+
+
+
 # OpenLU
 
 My own implementation of a Lego Universe server emulator in F# (And a little C# for EntityFramework)
@@ -7,6 +10,10 @@ Find similar projects here
 https://lusprojects.github.io/
 
 Thanks to [Wincent01](https://github.com/Wincent01)  and [yuwui](https://github.com/yuwui) for developing tools such as [RakDotNet](https://github.com/yuwui/RakDotNet) and [InfectedRose](https://github.com/Wincent01/InfectedRose) to make my life easier
+
+
+## Disclaimer  
+This is a WIP and is still in very early stages, it is not "play" ready in any means
 
 ## TODO
 * Documentation
