@@ -14,6 +14,7 @@ module rec CoreTypes =
             | MinifigListRequest = 0x02000453
             | MinifigListResponse = 0x06000553
             | MinifigCreateRequest = 0x03000453
+            | MinifigCreateResponse = 0x07000553
         type LoginResponse =
              SUCCESS = 0x01
             | BANNED = 0x02
@@ -34,24 +35,14 @@ module rec CoreTypes =
     
     type Session = 
        {
-        
         UserId : int
         UserKey: string} 
-    
-    
-    
-   
-
     module Events =
-        open System.Net
-        
         
         type NewConnectionEvent = delegate of IPEndPoint -> unit
         type HandlePacketEvent = delegate of IPEndPoint * byte[] ->unit
         type DisconnectionEvent = delegate of IPEndPoint -> unit
-        
         type ClientPacketEvent = delegate of IPEndPoint * LUPacket -> unit
-
         type HandshakeEvent = delegate of IPEndPoint * LUPacket -> unit
         type LoginEvent = delegate of IPEndPoint * LUPacket -> unit
 

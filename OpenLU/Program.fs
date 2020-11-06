@@ -14,10 +14,9 @@ let main argv =
     
     Services.ServiceProvider.RegisterService<IAuthServerService>(AuthServer())
     Services.ServiceProvider.RegisterService<IWorldServerService>(WorldServer())
-    Services.ServiceProvider.RegisterService<IDatabasebaseService>(LUDatabase())
+    Services.ServiceProvider.RegisterService<IDatabaseService>(LUDatabase())
     Services.ServiceProvider.RegisterService<ISessionService>(SessionCache())
     Services.ServiceProvider.RegisterService<IResourceService>(LocalResourceProvider())
-    let firstNames = ServiceProvider.GetService<IResourceService>().ReadTextAsync("names/minifigname_first.txt") |> Async.RunSynchronously
     LegoUniverse.Start()
     
     Console.ReadKey() |> ignore

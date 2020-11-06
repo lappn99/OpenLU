@@ -18,6 +18,9 @@ module Services =
         abstract member RemoveSession : IPEndPoint -> bool
     type IResourceService =
         abstract member ReadTextAsync : string -> Async<string>
+    type IDataBaseRepository = 
+        abstract member AddDatabase : string * BaseContext -> unit
+        abstract member GetDatabase<'T>  : string -> 'T
     
 
     module ServiceProvider = 
@@ -27,6 +30,7 @@ module Services =
         let mutable private currentCollection = serviceInitialization()
         
         let RegisterService<'T when 'T : not struct>(implementation : 'T) =  
+            
             currentCollection.Value.AddSingleton<'T>(implementation) |> ignore
             
         

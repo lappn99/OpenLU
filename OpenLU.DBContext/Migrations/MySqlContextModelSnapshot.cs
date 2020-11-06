@@ -40,6 +40,12 @@ namespace OpenLU.DBContext.Migrations
                     b.Property<uint>("HairStyle")
                         .HasColumnType("int unsigned");
 
+                    b.Property<uint>("Head")
+                        .HasColumnType("int unsigned");
+
+                    b.Property<uint>("HeadColor")
+                        .HasColumnType("int unsigned");
+
                     b.Property<uint>("LH")
                         .HasColumnType("int unsigned");
 

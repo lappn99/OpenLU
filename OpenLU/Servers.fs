@@ -14,6 +14,7 @@ open System.Linq
 open OpenLU.CoreTypes.Enums
 open Microsoft.FSharp.Collections
 open OpenLU.Models.GameModels
+
 open Replica
 module rec Servers = 
     [<AbstractClass>]
@@ -22,10 +23,12 @@ module rec Servers =
             let mutable _handlerMap : Map<LUPacketHeader,Delegate> = Map.empty
             
             let mutable  _server : IRakNetServer = null
+
+
             do
                 _handlerMap <- _handlerMap.Add(LUPacketHeader.HandShake,new ClientPacketEvent(this.Handshake))
         
-            member  this.HandlerMap with get() = _handlerMap and set(v : Map<LUPacketHeader,Delegate>) = _handlerMap <- v 
+            member this.HandlerMap with get() = _handlerMap and set(v : Map<LUPacketHeader,Delegate>) = _handlerMap <- v 
             member this.Port with get() = port
             member this.Password with get() = password
             member this.Server with get() = _server and set(v : IRakNetServer) = _server <- v
@@ -96,7 +99,7 @@ module rec Servers =
     end
     module AuthServer = 
         let clientLogin (authServer : AuthServer) (ipep : IPEndPoint) (packet : LUPacket) =
-            let users = ServiceProvider.GetService<IDatabasebaseService>().GetContext().Users
+            let users = ServiceProvider.GetService<IDatabaseService>().GetContext().Users
             let username = packet.Body.ReadString(33,true)
             let pwd = packet.Body.ReadString(41,true)
             Console.WriteLine("Login with Username: {0} and Password {1}",username,pwd)
@@ -162,6 +165,7 @@ module rec Servers =
             response.WriteUInt32((uint32)currentProcess.Id)
             response.WriteString("127.0.0.1",33)
             authServer.Server.Send(response,ipep) |> ignore
+            
 
 
     type WorldServer() as this = class
@@ -186,6 +190,7 @@ module rec Servers =
             let sessionKey = sessionService.FindByIp ipep
             if sessionService.RemoveSession(ipep) then
                 printfn "Session ended: %s" sessionKey.Value.UserKey
+
         let userSessionInfo (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
             let username = packet.Body.ReadString(wide = true)
             let key = packet.Body.ReadString(wide = true)
@@ -195,31 +200,38 @@ module rec Servers =
             match session with 
                 | Some(session) -> Console.WriteLine("User logged in with session id: {0}", key)
                 | None -> Console.WriteLine("Session not found: {0}",key)
+
         let minifigListRequest (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
             let response = BitStream()
-            response.WriteUInt64((uint64)LUPacketHeader.MinifigListResponse)
+            
             let session = ServiceProvider.GetService<ISessionService>().FindByIp(ipep)
             let minifigs = 
                 if session.IsSome then
-                    let db = ServiceProvider.GetService<IDatabasebaseService>().GetContext()
+                    use db = ServiceProvider.GetService<IDatabaseService>().GetContext()
                     db.Characters.Where(fun c -> c.UserId = session.Value.UserId).ToList() :> seq<Character>
+                    
                 else
                     Seq.empty
             
-            
+            response.WriteUInt64((uint64)LUPacketHeader.MinifigListResponse)
             response.WriteUInt8((byte)(Seq.length minifigs))
+            
             response.WriteUInt8((byte)0)
 
             Seq.iter(fun minifig -> writeMinifig response minifig) minifigs
             worldServer.Server.Send(response)
+            
         let writeMinifig (response :BitStream) (minifig: Character) =
             response.WriteInt64(minifig.Id)
             response.WriteUInt32(uint32 0)
-            response.WriteString(minifig.Name, wide = true)
-            response.WriteString(minifig.DisplayName,wide = true)
-            response.WriteBool(false)
-            response.WriteBool(false)
-            response.WriteString("",10)
+            response.WriteString(minifig.DisplayName, wide = true)
+            response.WriteString(minifig.Name,wide = true)
+            response.WriteByte(byte 0)
+            response.WriteByte(byte 0)
+            response.WriteString("",10,false)
+            (*response.WriteUInt32(minifig.HeadColor)
+            response.WriteUInt16(uint16 0)
+            response.WriteUInt32(minifig.Head)*)
             response.WriteUInt32(minifig.ShirtColor)
             response.WriteUInt32(minifig.ShirtStyle)
             response.WriteUInt32(minifig.PantsColor)
@@ -231,13 +243,17 @@ module rec Servers =
             response.WriteUInt32(minifig.Eyes)
             response.WriteUInt32(minifig.Mouth)
             response.WriteUInt32(uint32 0)
+            response.WriteUInt16(uint16 0)
             response.WriteUInt16(minifig.LastMapInstance)
             response.WriteUInt32(minifig.LastMapClone)
-            response.WriteUInt64(minifig.LastLogin)
+            response.WriteUInt64(uint64 0)
             response.WriteUInt16(uint16 0)
+            (*response.WriteUInt32(uint32 4582)
+            response.WriteUInt32(uint32 2513)*)
+            
 
         let minifigCreateRequest (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
-            let db = ServiceProvider.GetService<IDatabasebaseService>().GetContext()
+            use db = ServiceProvider.GetService<IDatabaseService>().GetContext()
             let session = ServiceProvider.GetService<ISessionService>().FindByIp ipep
             let newChar = new Character()
             let response = BitStream()
@@ -251,20 +267,26 @@ module rec Servers =
             }
             
             
-            let firstNames = resources.ReadTextAsync("names/minifigname_first.txt") |> Async.RunSynchronously
-            let middleNames = resources.ReadTextAsync("names/minifigname_last.txt") |> Async.RunSynchronously
-            let lastNames = resources.ReadTextAsync("names/minifigname_last.txt") |> Async.RunSynchronously
+            let namesAsync = 
+                [resources.ReadTextAsync("names/minifigname_first.txt") ;
+                resources.ReadTextAsync("names/minifigname_last.txt")  ;
+                resources.ReadTextAsync("names/minifigname_last.txt") ] 
+                |> Async.Parallel
             
             newChar.Id <- Replica.objectId
             newChar.Name <- packet.Body.ReadString(33,wide = true)
-            let first = (firstNames.Split "\n").[int32 (packet.Body.ReadUInt32())]
-            let middle = (middleNames.Split "\n").[int32 (packet.Body.ReadUInt32())]
-            let last = (lastNames.Split "\n").[int32 (packet.Body.ReadUInt32())]
+            let names = namesAsync |> Async.RunSynchronously
+
+            let first = ((names.[0]).Split "\n").[int32 (packet.Body.ReadUInt32())]
+            let middle = ((names.[1]).Split "\n").[int32 (packet.Body.ReadUInt32())]
+            let last = ((names.[2]).Split "\n").[int32 (packet.Body.ReadUInt32())]
             
             newChar.DisplayName <- String.concat "" [first; middle; last;]
             
-            packet.Body.ReadString(9,false) |> ignore
-            
+            packet.Body.Read(9) |> ignore
+            (*newChar.HeadColor <- packet.Body.ReadUInt32()
+            newChar.Head <- packet.Body.ReadUInt32()*)
+
             newChar.ShirtColor <- packet.Body.ReadUInt32()
             newChar.ShirtStyle <- packet.Body.ReadUInt32()
             newChar.PantsColor <- packet.Body.ReadUInt32()
@@ -277,18 +299,16 @@ module rec Servers =
             newChar.Mouth <- packet.Body.ReadUInt32()
             
             packet.Body.ReadUInt8() |> ignore
-            (*newChar.LastMapInstance <- packet.Body.ReadUInt16()
-            newChar.LastMapClone <- packet.Body.ReadUInt32()
-            newChar.LastLogin <- packet.Body.ReadUInt64()*)
             newChar.User <- user
             
             let char =db.Characters.Add(newChar) 
             let numRows = db.SaveChanges()
-            printfn "Character added: %s" char.Entity.DisplayName
-
+            
+            response.WriteUInt64(uint64 LUPacketHeader.MinifigCreateResponse)
             response.WriteUInt8((byte)0)
             worldServer.Server.Send(response,ipep)
             minifigListRequest worldServer ipep packet
+            
             
 
 
