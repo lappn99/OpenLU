@@ -13,7 +13,7 @@ namespace OpenLU.DBContext.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "3.1.7")
+                .HasAnnotation("ProductVersion", "3.1.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             modelBuilder.Entity("OpenLU.Models.GameModels+Character", b =>
@@ -89,6 +89,28 @@ namespace OpenLU.DBContext.Migrations
                     b.ToTable("Characters");
                 });
 
+            modelBuilder.Entity("OpenLU.Models.GameModels+InventoryItem", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("CharacterId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("Equipped")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<uint>("Lot")
+                        .HasColumnType("int unsigned");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CharacterId");
+
+                    b.ToTable("InventoryItems");
+                });
+
             modelBuilder.Entity("OpenLU.Models.GameModels+User", b =>
                 {
                     b.Property<int>("Id")
@@ -117,6 +139,15 @@ namespace OpenLU.DBContext.Migrations
                     b.HasOne("OpenLU.Models.GameModels+User", "User")
                         .WithMany("Characters")
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("OpenLU.Models.GameModels+InventoryItem", b =>
+                {
+                    b.HasOne("OpenLU.Models.GameModels+Character", "Character")
+                        .WithMany("Inventory")
+                        .HasForeignKey("CharacterId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

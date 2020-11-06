@@ -15,6 +15,7 @@ module rec CoreTypes =
             | MinifigListResponse = 0x06000553
             | MinifigCreateRequest = 0x03000453
             | MinifigCreateResponse = 0x07000553
+            | UserJoinWorldRequest = 0x04000453
 
 
         type LoginResponse =

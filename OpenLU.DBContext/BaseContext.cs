@@ -9,7 +9,9 @@ namespace OpenLU.DBContext
     {
         public DbSet<GameModels.User> Users { get; set; }
         public DbSet<GameModels.Character> Characters { get; set; }
-        
+        public DbSet<GameModels.InventoryItem> InventoryItems { get; set; }
+
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

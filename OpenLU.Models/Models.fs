@@ -9,6 +9,7 @@ module rec GameModels =
         member val Username = "" with get,set
         member val Password = "" with get,set
         member val Characters = System.Collections.Generic.List<Character>() with get,set
+        
         end
 
         
@@ -35,12 +36,16 @@ module rec GameModels =
         member val LastLogin = uint64 0 with get,set
         member val UserId = 0 with get,set
         member val User : User = User() with get,set
-        
+        member val Inventory = System.Collections.Generic.List<InventoryItem>() with get,set
         end
 
     type public InventoryItem() = class
-        member val Id  = int64 0 with get,set
-        member val Lot = int32 0 with get, set
+        member val Id : int64 = int64 0 with get,set 
+        member val Lot = uint32 0 with get, set
+        member val Equipped : bool =  false with get,set
+        member val CharacterId = int64 0 with get, set
+        member val Character = Character() with get,set
+        
     end
 
 

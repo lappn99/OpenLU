@@ -17,11 +17,7 @@ namespace OpenLU.DBContext.Client
         {
         }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseSqlite("Data Source = ./cdclient.db");
-
-        }
+       
 
         public virtual DbSet<AccessoryDefaultLoc> AccessoryDefaultLoc { get; set; }
         public virtual DbSet<Activities> Activities { get; set; }
@@ -165,7 +161,7 @@ namespace OpenLU.DBContext.Client
         {
             if (!optionsBuilder.IsConfigured)
             {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
+
                 optionsBuilder.UseSqlite("Data Source = ./cdclient.db");
             }
         }

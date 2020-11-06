@@ -14,8 +14,9 @@ open System.Linq
 open OpenLU.CoreTypes.Enums
 open Microsoft.FSharp.Collections
 open OpenLU.Models.GameModels
-
+open Microsoft.EntityFrameworkCore
 open Replica
+open OpenLU.DBContext
 module rec Servers = 
     type LUServer(port : int, password : string,name : string) =
             let mutable  _server : IRakNetServer = null
@@ -148,6 +149,7 @@ module rec Servers =
                 | LUPacketHeader.UserSessionInfo -> WorldServer.userSessionInfo server ipep packet
                 | LUPacketHeader.MinifigListRequest -> WorldServer.minifigListRequest server ipep packet
                 | LUPacketHeader.MinifigCreateRequest -> WorldServer.minifigCreateRequest server ipep packet
+                | LUPacketHeader.UserJoinWorldRequest ->WorldServer.userJoinWorld server ipep packet
                 | _ -> LUServer.unknownPacket server packet
 
         let handleDisconnect server ipep =
@@ -171,9 +173,10 @@ module rec Servers =
             let response = BitStream()
             
             let session = ServiceProvider.GetService<ISessionService>().FindByIp(ipep)
+            use db = LUDatabase.getContext()
             let minifigs = 
                 if session.IsSome then
-                    use db = LUDatabase.getContext()
+                    
                     db.Characters.Where(fun c -> c.UserId = session.Value.UserId).ToList() :> seq<Character>
                     
                 else
@@ -183,11 +186,12 @@ module rec Servers =
             response.WriteUInt8((byte)(Seq.length minifigs))
             
             response.WriteUInt8((byte)0)
-
-            Seq.iter(fun minifig -> writeMinifig response minifig) minifigs
+            
+            Seq.iter(fun minifig -> writeMinifig response minifig db ) minifigs
             worldServer.Server.Send(response)
             
-        let writeMinifig (response :BitStream) (minifig: Character) =
+        let writeMinifig (response :BitStream) (minifig: Character) (context : BaseContext) =
+            
             response.WriteInt64(minifig.Id)
             response.WriteUInt32(uint32 0)
             response.WriteString(minifig.DisplayName, wide = true)
@@ -212,17 +216,21 @@ module rec Servers =
             response.WriteUInt16(minifig.LastMapInstance)
             response.WriteUInt32(minifig.LastMapClone)
             response.WriteUInt64(uint64 0) //Last time logn
-            response.WriteUInt16(uint16 0)//Num items
+            let minifigItems  = context.InventoryItems.Where(fun i -> i.CharacterId = minifig.Id) :> seq<InventoryItem>
+            
+            response.WriteUInt16(uint16 (Seq.length minifigItems))//Num items
+            Seq.iter(fun (i : InventoryItem) -> response.WriteUInt32(uint32 i.Lot)) minifigItems
             
 
         let minifigCreateRequest (worldServer : LUServer) ( ipep : IPEndPoint) (packet : LUPacket) =
-            use db = LUDatabase.getContext()
+            
             let session = ServiceProvider.GetService<ISessionService>().FindByIp ipep
             let newChar = new Character()
             let response = BitStream()
             let resources = ServiceProvider.GetService<IResourceService>()
-
-            let user=  query{
+            
+            use db = LUDatabase.getContext()
+            let user =  query{
                 for user in db.Users do
                     where(user.Id = session.Value.UserId)
                     select user
@@ -233,8 +241,11 @@ module rec Servers =
                 resources.ReadTextAsync("names/minifigname_last.txt")  ;
                 resources.ReadTextAsync("names/minifigname_last.txt") ] 
                 |> Async.Parallel
+
+            use cdContext = CDClientDatabase.getContext()
             
-            newChar.Id <- Replica.objectId
+            
+            newChar.Id <- Replica.objectId()
             newChar.Name <- packet.Body.ReadString(33,wide = true)
             let names = namesAsync |> Async.RunSynchronously
 
@@ -261,14 +272,40 @@ module rec Servers =
             
             packet.Body.ReadUInt8() |> ignore
             newChar.User <- user
+
+
+
+            let brickColor = CDClientDatabase.getBrickColor cdContext newChar.ShirtColor
+            let shirtName = sprintf "%s Shirt %d" brickColor.Description newChar.ShirtStyle
+            let shirtLot = cdContext.Objects.ToArray().FirstOrDefault(fun o -> o.Name.ToLower() = shirtName.ToLower())
             
-            let char =db.Characters.Add(newChar) 
+            let pantsColor = CDClientDatabase.getBrickColor cdContext newChar.PantsColor
+            let pantsName = sprintf "%s Paants" pantsColor.Description
+            let pantsLot = cdContext.Objects.ToArray().FirstOrDefault(fun o -> o.Name.ToLower() = pantsName.ToLower())
+
+            
+            let pantsItem = InventoryItem()
+            pantsItem.Id <- Replica.objectId()
+            pantsItem.Equipped <- true
+            pantsItem.Lot <- if pantsLot <> null then uint32 pantsLot.Id.Value else uint32 4049
+
+            let shirtItem = InventoryItem()
+            shirtItem.Id <- Replica.objectId()
+            shirtItem.Equipped <- true
+            shirtItem.Lot <- if shirtLot <> null then uint32 shirtLot.Id.Value else uint32 2508
+            newChar.Inventory.AddRange([|shirtItem; pantsItem|])
+
+            let char =db.Characters.Add(newChar)
+            printfn "Character inventory items: %d" char.Entity.Inventory.Count
             let numRows = db.SaveChanges()
-            
             response.WriteUInt64(uint64 LUPacketHeader.MinifigCreateResponse)
             response.WriteUInt8((byte)0)
             worldServer.Server.Send(response,ipep)
             minifigListRequest worldServer ipep packet
+
+        let userJoinWorld (worldServer : LUServer) ( ipep : IPEndPoint) (packet : LUPacket) =
+            let minifig = packet.Body.ReadLong()
+            printfn "Minifig: %i joining world" minifig
             
             
 

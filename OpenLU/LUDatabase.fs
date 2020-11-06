@@ -2,7 +2,7 @@
 open OpenLU.Services
 open System
 open OpenLU.DBContext
-
+open OpenLU.DBContext.Client
 
 
 
@@ -11,16 +11,17 @@ module LUDatabase =
     let getContext() = initContext()
 
 module CDClientDatabase = 
-    let private initContext() = new SQLiteContext()
-    let getContext() = initContext()
+    let getContext() =  new CDContext()
 
-type LUDatabase() =
-    interface IDatabaseService with
-        member this.GetContext() = LUDatabase.getContext() :> BaseContext
+    let getBrickColor (context:CDContext) (colorId: uint32) =
+        query {
+            for brickColor in context.BrickColors do
+            where( brickColor.Id.Value = int64 colorId)
+            exactlyOne
+        }
 
-type CDClientDatabase() = 
-   interface IDatabaseService with
-    member this.GetContext() = CDClientDatabase.getContext() :> BaseContext
+
+    
 
 
     
