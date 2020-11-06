@@ -19,6 +19,7 @@ This is a WIP and is still in very early stages, it is not "play" ready in any m
 * Documentation
 * Comments
 * Load player in world
+* Setup cdclient database in server
 
 ## Installation
 
