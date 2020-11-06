@@ -3,7 +3,7 @@
 
 # OpenLU
 
-My own implementation of a Lego Universe server emulator in F# (And a little C# for EntityFramework)
+My own implementation of a Lego Universe server emulator in F# (C# for EntityFramework stuff)
 
 Find similar projects here
 
