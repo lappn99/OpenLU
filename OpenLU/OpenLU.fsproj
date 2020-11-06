@@ -14,8 +14,8 @@
     <Compile Include="LUResources.fs" />
     <Compile Include="SessionCache.fs" />
     <Compile Include="LUDatabase.fs" />
-    <Compile Include="LegoUniverse.fs" />
     <Compile Include="Servers.fs" />
+    <Compile Include="LegoUniverse.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

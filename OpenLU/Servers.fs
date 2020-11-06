@@ -17,46 +17,21 @@ open OpenLU.Models.GameModels
 
 open Replica
 module rec Servers = 
-    [<AbstractClass>]
-    type LUServer(port : int, password : string,name : string) as this =
-        
-            let mutable _handlerMap : Map<LUPacketHeader,Delegate> = Map.empty
-            
+    type LUServer(port : int, password : string,name : string) =
             let mutable  _server : IRakNetServer = null
-
-
-            do
-                _handlerMap <- _handlerMap.Add(LUPacketHeader.HandShake,new ClientPacketEvent(this.Handshake))
-        
-            member this.HandlerMap with get() = _handlerMap and set(v : Map<LUPacketHeader,Delegate>) = _handlerMap <- v 
             member this.Port with get() = port
             member this.Password with get() = password
             member this.Server with get() = _server and set(v : IRakNetServer) = _server <- v
             member this.Name with get() = name
-        
-            abstract member  StartServer : unit -> unit
-            abstract member NewConnection : IPEndPoint -> unit
-            abstract member HandlePacket : IPEndPoint -> byte[] ->unit
-            abstract member Disconnection : IPEndPoint -> unit
-            abstract member Handshake :IPEndPoint -> LUPacket -> unit
-        
-            member this.OnNewConnection : NewConnectionEvent = NewConnectionEvent(this.NewConnection)
-            member this.OnHandlePacket : HandlePacketEvent = HandlePacketEvent(this.HandlePacket)
-            member this.OnDisconnect : DisconnectionEvent = DisconnectionEvent(this.Disconnection)
 
-            default this.StartServer() = LUServer.startServer this
-            default this.Handshake (ipep : IPEndPoint) (packet : LUPacket) = LUServer.handShake this ipep packet
-            default this.NewConnection(ipep) = LUServer.newConnection this ipep
-            default this.Disconnection(ipep) = LUServer.disconnection this ipep
-            default this.HandlePacket ipep data = LUServer.handlePacket this ipep data
-
+            
     module LUServer =
-        let startServer(server: LUServer) = 
+        let startServer(server: LUServer) (onReceive) (onNewConnection) (onDisconnect)  = 
             Console.WriteLine("Starting: {0}",server.Name)
             server.Server <- RakNetServer(server.Port,server.Password)
-            server.Server.add_PacketReceived(fun (ipep) (data) -> server.OnHandlePacket.Invoke(ipep,data))
-            server.Server.add_NewConnection(fun ipep -> server.OnNewConnection.Invoke ipep)
-            server.Server.add_Disconnection(fun ipep -> server.OnDisconnect.Invoke ipep)
+            server.Server.add_PacketReceived(fun (ipep) (data) -> onReceive server ipep data)
+            server.Server.add_NewConnection(fun ipep -> onNewConnection server ipep)
+            server.Server.add_Disconnection(fun ipep -> onDisconnect server ipep)
             server.Server.Start()
 
         let handShake(server: LUServer) (ipep:IPEndPoint) (packet : LUPacket) =
@@ -72,33 +47,28 @@ module rec Servers =
             
             server.Server.Send(response,ipep) |> ignore
 
-        let newConnection server (ipep : IPEndPoint) = 
+        let newConnection (server : LUServer) (ipep : IPEndPoint) = 
             Console.WriteLine("{0}:{1} connected to {2}",ipep.Address,ipep.Port,server.Name);
 
-        let disconnection server (ipep : IPEndPoint) =
+        let disconnection (server : LUServer) (ipep : IPEndPoint) =
             
             Console.WriteLine("{0}:{1} disconnected from {2}",ipep.Address,ipep.Port,server.Name)
 
-        let handlePacket server (ipep : IPEndPoint) (data : byte[]) = 
+        let handlePacket (server : LUServer)  (ipep : IPEndPoint) (data : byte[]) = 
             let luPacket = LUPacket(data)
             Console.WriteLine("Packet recieved: {0}",luPacket.Header)
 
-            server.HandlerMap.[luPacket.Header].DynamicInvoke(ipep,luPacket) |> ignore
+            //server.HandlerMap.[luPacket.Header].DynamicInvoke(ipep,luPacket) |> ignore
 
-    type AuthServer() as this = class
-        inherit LUServer(1001,"3.25 ND1","Auth Server")
-        do
-            this.HandlerMap <- this.HandlerMap.Add(LUPacketHeader.ClientLogin ,new ClientPacketEvent(this.ClientLogin))
-
-        member this.ClientLogin (ipep : IPEndPoint) (packet : LUPacket) = AuthServer.clientLogin this ipep packet
-
-        override this.Handshake (ipep: IPEndPoint) (packet : LUPacket) = AuthServer.handShake this ipep packet
-
-        interface IAuthServerService with
-            member this.Start() = this.StartServer()
-    end
     module AuthServer = 
-        let clientLogin (authServer : AuthServer) (ipep : IPEndPoint) (packet : LUPacket) =
+        let handleAuthPacket (server : LUServer)  (ipep : IPEndPoint) (data : byte[]) =
+            let packet = LUPacket data
+            let header = packet.Header
+            match header with
+                | LUPacketHeader.HandShake -> AuthServer.handShake server ipep packet
+                | LUPacketHeader.ClientLogin -> AuthServer.clientLogin server ipep packet
+
+        let clientLogin (authServer : LUServer) (ipep : IPEndPoint) (packet : LUPacket) =
             let users = ServiceProvider.GetService<IDatabaseService>().GetContext().Users
             let username = packet.Body.ReadString(33,true)
             let pwd = packet.Body.ReadString(41,true)
@@ -109,7 +79,6 @@ module rec Servers =
                 for student in users do
                     select (student.Username, student.Password)
                     contains (username,pwd)
-
             }
             let loginResult = 
                 match userExsists with 
@@ -153,7 +122,7 @@ module rec Servers =
                 ServiceProvider.GetService<ISessionService>().NewSession(ipep,session)
             Console.WriteLine("Auth finished")
 
-        let handShake (authServer : AuthServer) (ipep: IPEndPoint) (packet : LUPacket) =
+        let handShake (authServer : LUServer) (ipep: IPEndPoint) (packet : LUPacket) =
             let response = BitStream()
             let client_version = packet.Body.ReadUInt32()
             
@@ -166,24 +135,17 @@ module rec Servers =
             response.WriteString("127.0.0.1",33)
             authServer.Server.Send(response,ipep) |> ignore
             
-
-
-    type WorldServer() as this = class
-        inherit LUServer(2002,"3.25 ND1","World Server")
-        do
-            this.HandlerMap <- this.HandlerMap.Add(LUPacketHeader.UserSessionInfo,new ClientPacketEvent(this.UserSessionInfo))
-            this.HandlerMap <- this.HandlerMap.Add(LUPacketHeader.MinifigListRequest,new ClientPacketEvent(this.MinifigListRequest))
-            this.HandlerMap <- this.HandlerMap.Add(LUPacketHeader.MinifigCreateRequest,new ClientPacketEvent(this.MinifigCreateRequest))
-        member this.UserSessionInfo (ipep) (packet) = WorldServer.userSessionInfo this ipep packet
-        member this.MinifigListRequest (ipep) (packet) = WorldServer.minifigListRequest this ipep packet
-        member this.MinifigCreateRequest  (ipep) (packet) = WorldServer.minifigCreateRequest this ipep packet
-        override this.Disconnection  (ipep) = WorldServer.handleDisconnect this ipep
-        interface IWorldServerService with
-            member this.Start() = this.StartServer()
-    end
-
     module WorldServer = 
         
+        let handleWorldPacket (server : LUServer)  (ipep : IPEndPoint) (data : byte[]) = 
+            let packet = LUPacket data
+            let header = packet.Header
+            match header with
+                | LUPacketHeader.HandShake -> LUServer.handShake server ipep packet
+                | LUPacketHeader.UserSessionInfo -> WorldServer.userSessionInfo server ipep packet
+                | LUPacketHeader.MinifigListRequest -> WorldServer.minifigListRequest server ipep packet
+                | LUPacketHeader.MinifigCreateRequest -> WorldServer.minifigCreateRequest server ipep packet
+
         let handleDisconnect server ipep =
             LUServer.disconnection server ipep
             let sessionService = ServiceProvider.GetService<ISessionService>()
@@ -191,7 +153,7 @@ module rec Servers =
             if sessionService.RemoveSession(ipep) then
                 printfn "Session ended: %s" sessionKey.Value.UserKey
 
-        let userSessionInfo (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
+        let userSessionInfo (worldServer : LUServer) ( ipep : IPEndPoint) (packet : LUPacket) =
             let username = packet.Body.ReadString(wide = true)
             let key = packet.Body.ReadString(wide = true)
             let hash = packet.Body.ReadString(32)
@@ -201,7 +163,7 @@ module rec Servers =
                 | Some(session) -> Console.WriteLine("User logged in with session id: {0}", key)
                 | None -> Console.WriteLine("Session not found: {0}",key)
 
-        let minifigListRequest (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
+        let minifigListRequest (worldServer : LUServer) ( ipep : IPEndPoint) (packet : LUPacket) =
             let response = BitStream()
             
             let session = ServiceProvider.GetService<ISessionService>().FindByIp(ipep)
@@ -228,10 +190,9 @@ module rec Servers =
             response.WriteString(minifig.Name,wide = true)
             response.WriteByte(byte 0)
             response.WriteByte(byte 0)
-            response.WriteString("",10,false)
-            (*response.WriteUInt32(minifig.HeadColor)
+            response.WriteUInt32(minifig.HeadColor)
             response.WriteUInt16(uint16 0)
-            response.WriteUInt32(minifig.Head)*)
+            response.WriteUInt32(minifig.Head)
             response.WriteUInt32(minifig.ShirtColor)
             response.WriteUInt32(minifig.ShirtStyle)
             response.WriteUInt32(minifig.PantsColor)
@@ -243,30 +204,26 @@ module rec Servers =
             response.WriteUInt32(minifig.Eyes)
             response.WriteUInt32(minifig.Mouth)
             response.WriteUInt32(uint32 0)
-            response.WriteUInt16(uint16 0)
+            response.WriteUInt16(uint16 0) //Zone
             response.WriteUInt16(minifig.LastMapInstance)
             response.WriteUInt32(minifig.LastMapClone)
-            response.WriteUInt64(uint64 0)
-            response.WriteUInt16(uint16 0)
-            (*response.WriteUInt32(uint32 4582)
-            response.WriteUInt32(uint32 2513)*)
+            response.WriteUInt64(uint64 0) //Last time logn
+            response.WriteUInt16(uint16 0)//Num items
             
 
-        let minifigCreateRequest (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
+        let minifigCreateRequest (worldServer : LUServer) ( ipep : IPEndPoint) (packet : LUPacket) =
             use db = ServiceProvider.GetService<IDatabaseService>().GetContext()
             let session = ServiceProvider.GetService<ISessionService>().FindByIp ipep
             let newChar = new Character()
             let response = BitStream()
             let resources = ServiceProvider.GetService<IResourceService>()
-       
+
             let user=  query{
                 for user in db.Users do
                     where(user.Id = session.Value.UserId)
                     select user
                     exactlyOne
             }
-            
-            
             let namesAsync = 
                 [resources.ReadTextAsync("names/minifigname_first.txt") ;
                 resources.ReadTextAsync("names/minifigname_last.txt")  ;
@@ -283,9 +240,9 @@ module rec Servers =
             
             newChar.DisplayName <- String.concat "" [first; middle; last;]
             
-            packet.Body.Read(9) |> ignore
-            (*newChar.HeadColor <- packet.Body.ReadUInt32()
-            newChar.Head <- packet.Body.ReadUInt32()*)
+            packet.Body.ReadUInt8() |> ignore
+            newChar.HeadColor <- packet.Body.ReadUInt32()
+            newChar.Head <- packet.Body.ReadUInt32()
 
             newChar.ShirtColor <- packet.Body.ReadUInt32()
             newChar.ShirtStyle <- packet.Body.ReadUInt32()

@@ -12,8 +12,6 @@ open OpenLU.LUResources
 [<EntryPoint>]
 let main argv =
     
-    Services.ServiceProvider.RegisterService<IAuthServerService>(AuthServer())
-    Services.ServiceProvider.RegisterService<IWorldServerService>(WorldServer())
     Services.ServiceProvider.RegisterService<IDatabaseService>(LUDatabase())
     Services.ServiceProvider.RegisterService<ISessionService>(SessionCache())
     Services.ServiceProvider.RegisterService<IResourceService>(LocalResourceProvider())
