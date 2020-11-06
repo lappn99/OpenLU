@@ -1,7 +1,9 @@
 ﻿namespace OpenLU.Models
 open System
 open System.Net
+
 module rec GameModels = 
+   
     type public User() =  class
         member val Id = 0 with get,set
         member val Username = "" with get,set
@@ -9,6 +11,7 @@ module rec GameModels =
         member val Characters = System.Collections.Generic.List<Character>() with get,set
         end
 
+        
     type public Character() = class
         member val Id  = (int64)0 with get,set
         member val Name = "" with get,set
@@ -32,6 +35,7 @@ module rec GameModels =
         member val LastLogin = uint64 0 with get,set
         member val UserId = 0 with get,set
         member val User : User = User() with get,set
+        
         end
 
     type public InventoryItem() = class

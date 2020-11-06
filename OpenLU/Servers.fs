@@ -59,6 +59,8 @@ module rec Servers =
             Console.WriteLine("Packet recieved: {0}",luPacket.Header)
 
             //server.HandlerMap.[luPacket.Header].DynamicInvoke(ipep,luPacket) |> ignore
+        let unknownPacket (server : LUServer) (packet :LUPacket) =
+            printfn "Unkown packet %X sent to server %s" (uint32 packet.Header) server.Name
 
     module AuthServer = 
         let handleAuthPacket (server : LUServer)  (ipep : IPEndPoint) (data : byte[]) =
@@ -67,9 +69,10 @@ module rec Servers =
             match header with
                 | LUPacketHeader.HandShake -> AuthServer.handShake server ipep packet
                 | LUPacketHeader.ClientLogin -> AuthServer.clientLogin server ipep packet
+                | _ -> LUServer.unknownPacket server packet
 
         let clientLogin (authServer : LUServer) (ipep : IPEndPoint) (packet : LUPacket) =
-            let users = ServiceProvider.GetService<IDatabaseService>().GetContext().Users
+            let users = LUDatabase.getContext().Users
             let username = packet.Body.ReadString(33,true)
             let pwd = packet.Body.ReadString(41,true)
             Console.WriteLine("Login with Username: {0} and Password {1}",username,pwd)
@@ -145,6 +148,7 @@ module rec Servers =
                 | LUPacketHeader.UserSessionInfo -> WorldServer.userSessionInfo server ipep packet
                 | LUPacketHeader.MinifigListRequest -> WorldServer.minifigListRequest server ipep packet
                 | LUPacketHeader.MinifigCreateRequest -> WorldServer.minifigCreateRequest server ipep packet
+                | _ -> LUServer.unknownPacket server packet
 
         let handleDisconnect server ipep =
             LUServer.disconnection server ipep
@@ -169,7 +173,7 @@ module rec Servers =
             let session = ServiceProvider.GetService<ISessionService>().FindByIp(ipep)
             let minifigs = 
                 if session.IsSome then
-                    use db = ServiceProvider.GetService<IDatabaseService>().GetContext()
+                    use db = LUDatabase.getContext()
                     db.Characters.Where(fun c -> c.UserId = session.Value.UserId).ToList() :> seq<Character>
                     
                 else
@@ -212,7 +216,7 @@ module rec Servers =
             
 
         let minifigCreateRequest (worldServer : LUServer) ( ipep : IPEndPoint) (packet : LUPacket) =
-            use db = ServiceProvider.GetService<IDatabaseService>().GetContext()
+            use db = LUDatabase.getContext()
             let session = ServiceProvider.GetService<ISessionService>().FindByIp ipep
             let newChar = new Character()
             let response = BitStream()

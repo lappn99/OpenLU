@@ -15,6 +15,8 @@ module rec CoreTypes =
             | MinifigListResponse = 0x06000553
             | MinifigCreateRequest = 0x03000453
             | MinifigCreateResponse = 0x07000553
+
+
         type LoginResponse =
              SUCCESS = 0x01
             | BANNED = 0x02
