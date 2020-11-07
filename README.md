@@ -13,7 +13,8 @@ Thanks to [Wincent01](https://github.com/Wincent01)  and [yuwui](https://github.
 
 
 ## Disclaimer  
-This is a WIP and is still in very early stages, it is not "play" ready in any means
+* This is a WIP and is still in very early stages, it is not "play" ready in any means    
+* This project is not affiliated with The Lego Group or Lego
 
 ## TODO
 * Documentation
