@@ -2,8 +2,9 @@
 open RakDotNet
 open System
 open System.Net
-
+open System.IO.Compression
 module rec CoreTypes =
+    
     module Enums =
 
         type LUPacketHeader =
@@ -16,6 +17,9 @@ module rec CoreTypes =
             | MinifigCreateRequest = 0x03000453
             | MinifigCreateResponse = 0x07000553
             | UserJoinWorldRequest = 0x04000453
+            | WorldInfo = 0x02000553
+            | ClientLoadComplete = 0x13000453
+            | DetailedUserInfo = 0x04000553
 
 
         type LoginResponse =
@@ -24,6 +28,8 @@ module rec CoreTypes =
             | INVALID_PERM = 0x03
             | INVALID_LOGIN_INFO = 0x06
             | ACCOUNT_LOCKED = 0x07
+
+
     type LUPacket = 
         struct
            val Header : Enums.LUPacketHeader

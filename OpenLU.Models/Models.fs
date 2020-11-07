@@ -1,7 +1,7 @@
 ﻿namespace OpenLU.Models
 open System
 open System.Net
-
+open System.Numerics
 module rec GameModels = 
    
     type public User() =  class
@@ -31,12 +31,15 @@ module rec GameModels =
         member val Eyebrows = uint32 0 with get,set
         member val Eyes = uint32 0 with get,set
         member val Mouth = uint32 0 with get,set
+        member val Zone = uint16 0 with get,set
         member val LastMapInstance = uint16 0 with get,set
         member val LastMapClone = uint32 0 with get,set
         member val LastLogin = uint64 0 with get,set
         member val UserId = 0 with get,set
         member val User : User = User() with get,set
         member val Inventory = System.Collections.Generic.List<InventoryItem>() with get,set
+        
+
         end
 
     type public InventoryItem() = class

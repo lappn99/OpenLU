@@ -15,6 +15,7 @@ namespace OpenLU.DBContext
             try
             {
                 optionsBuilder.UseMySql(ConfigurationProvider.GetConfig()["connectionString"]);
+                
             }
             catch(FileNotFoundException)
             {

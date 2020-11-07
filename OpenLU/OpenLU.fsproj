@@ -33,8 +33,29 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="InfectedRose.Core">
+      <HintPath>..\InfectedRose\InfectedRose.Core\bin\Debug\netcoreapp3.1\InfectedRose.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="InfectedRose.Luz">
+      <HintPath>..\InfectedRose\InfectedRose.Luz\bin\Debug\netcoreapp3.1\InfectedRose.Luz.dll</HintPath>
+    </Reference>
+    <Reference Include="InfectedRose.Lvl">
+      <HintPath>..\InfectedRose\InfectedRose.Lvl\bin\Debug\netcoreapp3.1\InfectedRose.Lvl.dll</HintPath>
+    </Reference>
+    <Reference Include="InfectedRose.Terrain">
+      <HintPath>..\InfectedRose\InfectedRose.Terrain\bin\Debug\netcoreapp3.1\InfectedRose.Terrain.dll</HintPath>
+    </Reference>
+    <Reference Include="InfectedRose.Triggers">
+      <HintPath>..\InfectedRose\InfectedRose.Triggers\bin\Debug\netcoreapp3.1\InfectedRose.Triggers.dll</HintPath>
+    </Reference>
+    <Reference Include="InfectedRose.Utilities">
+      <HintPath>..\InfectedRose\InfectedRose.Utilities\bin\Debug\netcoreapp3.1\InfectedRose.Utilities.dll</HintPath>
+    </Reference>
     <Reference Include="RakDotNet">
       <HintPath>..\RakDotNet\RakDotNet\bin\Debug\netstandard2.0\RakDotNet.dll</HintPath>
+    </Reference>
+    <Reference Include="RakDotNet.IO">
+      <HintPath>..\InfectedRose\InfectedRose.Interface\bin\Debug\netcoreapp3.1\RakDotNet.IO.dll</HintPath>
     </Reference>
   </ItemGroup>
 

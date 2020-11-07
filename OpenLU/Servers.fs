@@ -1,22 +1,19 @@
 ﻿namespace OpenLU
-
-open System.Collections.Generic
 open CoreTypes
 open RakDotNet
 open System
 open System.Net
-open CoreTypes.Events
 open Services
 open RakDotNet.RakNet
 open System.Diagnostics
-open OpenLU.Services
 open System.Linq
 open OpenLU.CoreTypes.Enums
 open Microsoft.FSharp.Collections
 open OpenLU.Models.GameModels
-open Microsoft.EntityFrameworkCore
-open Replica
+open InfectedRose.Luz
 open OpenLU.DBContext
+open System.Numerics
+
 module rec Servers = 
     type LUServer(port : int, password : string,name : string) =
             let mutable  _server : IRakNetServer = null
@@ -67,10 +64,13 @@ module rec Servers =
         let handleAuthPacket (server : LUServer)  (ipep : IPEndPoint) (data : byte[]) =
             let packet = LUPacket data
             let header = packet.Header
-            match header with
-                | LUPacketHeader.HandShake -> AuthServer.handShake server ipep packet
-                | LUPacketHeader.ClientLogin -> AuthServer.clientLogin server ipep packet
-                | _ -> LUServer.unknownPacket server packet
+            async{
+                match header with
+                    | LUPacketHeader.HandShake -> AuthServer.handShake server ipep packet
+                    | LUPacketHeader.ClientLogin -> AuthServer.clientLogin server ipep packet
+                    | _ -> LUServer.unknownPacket server packet
+            } |> Async.Ignore|> Async.Start
+
 
         let clientLogin (authServer : LUServer) (ipep : IPEndPoint) (packet : LUPacket) =
             let users = LUDatabase.getContext().Users
@@ -142,15 +142,20 @@ module rec Servers =
     module WorldServer = 
         
         let handleWorldPacket (server : LUServer)  (ipep : IPEndPoint) (data : byte[]) = 
+        
             let packet = LUPacket data
             let header = packet.Header
+            async{
             match header with
                 | LUPacketHeader.HandShake -> LUServer.handShake server ipep packet
                 | LUPacketHeader.UserSessionInfo -> WorldServer.userSessionInfo server ipep packet
                 | LUPacketHeader.MinifigListRequest -> WorldServer.minifigListRequest server ipep packet
                 | LUPacketHeader.MinifigCreateRequest -> WorldServer.minifigCreateRequest server ipep packet
                 | LUPacketHeader.UserJoinWorldRequest ->WorldServer.userJoinWorld server ipep packet
+                | LUPacketHeader.ClientLoadComplete -> WorldServer.clientLoaded server ipep packet
                 | _ -> LUServer.unknownPacket server packet
+            } |> Async.Ignore |> Async.Start
+            
 
         let handleDisconnect server ipep =
             LUServer.disconnection server ipep
@@ -176,7 +181,6 @@ module rec Servers =
             use db = LUDatabase.getContext()
             let minifigs = 
                 if session.IsSome then
-                    
                     db.Characters.Where(fun c -> c.UserId = session.Value.UserId).ToList() :> seq<Character>
                     
                 else
@@ -212,7 +216,7 @@ module rec Servers =
             response.WriteUInt32(minifig.Eyes)
             response.WriteUInt32(minifig.Mouth)
             response.WriteUInt32(uint32 0)
-            response.WriteUInt16(uint16 0) //Zone
+            response.WriteUInt16(uint16 minifig.Zone) //Zone
             response.WriteUInt16(minifig.LastMapInstance)
             response.WriteUInt32(minifig.LastMapClone)
             response.WriteUInt64(uint64 0) //Last time logn
@@ -269,10 +273,11 @@ module rec Servers =
             newChar.Eyebrows <- packet.Body.ReadUInt32()
             newChar.Eyes <- packet.Body.ReadUInt32()
             newChar.Mouth <- packet.Body.ReadUInt32()
-            
+           
             packet.Body.ReadUInt8() |> ignore
+            newChar.Zone <- uint16 1000
             newChar.User <- user
-
+            
 
 
             let brickColor = CDClientDatabase.getBrickColor cdContext newChar.ShirtColor
@@ -280,7 +285,7 @@ module rec Servers =
             let shirtLot = cdContext.Objects.ToArray().FirstOrDefault(fun o -> o.Name.ToLower() = shirtName.ToLower())
             
             let pantsColor = CDClientDatabase.getBrickColor cdContext newChar.PantsColor
-            let pantsName = sprintf "%s Paants" pantsColor.Description
+            let pantsName = sprintf "%s Pants" pantsColor.Description
             let pantsLot = cdContext.Objects.ToArray().FirstOrDefault(fun o -> o.Name.ToLower() = pantsName.ToLower())
 
             
@@ -296,16 +301,47 @@ module rec Servers =
             newChar.Inventory.AddRange([|shirtItem; pantsItem|])
 
             let char =db.Characters.Add(newChar)
-            printfn "Character inventory items: %d" char.Entity.Inventory.Count
+            
             let numRows = db.SaveChanges()
             response.WriteUInt64(uint64 LUPacketHeader.MinifigCreateResponse)
             response.WriteUInt8((byte)0)
             worldServer.Server.Send(response,ipep)
             minifigListRequest worldServer ipep packet
 
+        let sendWorldInfo (worldServer : LUServer) ( ipep : IPEndPoint) (minifigId) =
+            let session = ServiceProvider.GetService<ISessionService>().FindByIp(ipep)
+            use db = LUDatabase.getContext()
+            let user =  db.Users.Where(fun u -> u.Id = session.Value.UserId)
+            let character = db.Characters.Where(fun c -> c.Id = minifigId).Single()
+            use cdContext = CDClientDatabase.getContext()
+            let zone = cdContext.ZoneTable.ToArray().Where(fun z -> uint16 z.ZoneId.Value = character.Zone).Single()
+            
+            
+            let luzFile = LUResources.getZone zone.ZoneName
+            
+
+            let response = BitStream()
+            response.WriteUInt64(uint64 LUPacketHeader.WorldInfo)
+            response.WriteUInt16(uint16 zone.ZoneId.Value)
+            response.WriteUInt16(uint16 0)
+            response.WriteUInt32(uint32 0)
+            response.WriteUInt32(uint32 0x20b8087c)
+            response.WriteUInt16(uint16 0)
+            response.WriteFloat(luzFile.SpawnPoint.X) //x
+            response.WriteFloat(luzFile.SpawnPoint.Y) //y
+            response.WriteFloat(luzFile.SpawnPoint.Z) //z
+            response.WriteUInt32(uint32 0)
+            worldServer.Server.Send(response, ipep)
+
         let userJoinWorld (worldServer : LUServer) ( ipep : IPEndPoint) (packet : LUPacket) =
             let minifig = packet.Body.ReadLong()
-            printfn "Minifig: %i joining world" minifig
+            sendWorldInfo worldServer ipep minifig
+
+        let clientLoaded (worldServer : LUServer) ( ipep : IPEndPoint) (packet : LUPacket) =
+            let session = ServiceProvider.GetService<ISessionService>().FindByIp(ipep)
+            
+            printfn "Session %s loading into zone %d " session.Value.UserKey (packet.Body.ReadUInt16())
+            
             
             
 

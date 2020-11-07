@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
-
+using OpenLU.Configuration;
 namespace OpenLU.DBContext.Client
 {
     public partial class CDContext : DbContext
@@ -161,8 +161,8 @@ namespace OpenLU.DBContext.Client
         {
             if (!optionsBuilder.IsConfigured)
             {
-
-                optionsBuilder.UseSqlite("Data Source = ./cdclient.db");
+                var path = ConfigurationProvider.GetConfig()["luResources"] + "\\cdclient.db";
+                optionsBuilder.UseSqlite($"Data Source = {path}");
             }
         }
 
