@@ -19,6 +19,8 @@ This is a WIP and is still in very early stages, it is not "play" ready in any m
 * Documentation
 * Comments
 * Load player in world
+* Create setup tool (Seperate project/repository)
+* Implement Sqlite provider/context
 
 ## Installation
 
@@ -29,7 +31,7 @@ This is a WIP and is still in very early stages, it is not "play" ready in any m
    * [PackageManager Tools](https://docs.microsoft.com/en-us/ef/core/miscellaneous/cli/powershell)
    * [CLI Tools](https://docs.microsoft.com/en-us/ef/core/miscellaneous/cli/dotnet)
 * Lego Universe complete client 
-  * Find list of clients [here](https://docs.google.com/document/d/1XmHXWuUQqzUIOcv6SVVjaNBm4bFg9lnW4Pk1pllimEg/edit)
+  * Find list of clients [here](https://docs.google.com/document/d/1XmHXWuUQqzUIOcv6SVVjaNBm4bFg9lnW4Pk1pllimEg/edit) (humanoid/lcdr’s unpacked client is reccomended)
 
 ### Configuration
 1. Create file called "cfg.json" in OpenLU.Configuration root (where OpenLU.Configuration.fsproj is)
