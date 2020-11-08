@@ -2,22 +2,22 @@
 
 namespace OpenLU.DBContext.Migrations
 {
-    public partial class CharZone : Migration
+    public partial class CurrentCharacter : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<ushort>(
-                name: "Zone",
-                table: "Characters",
+            migrationBuilder.AddColumn<long>(
+                name: "CurrentCharId",
+                table: "Users",
                 nullable: false,
-                defaultValue: (ushort)0);
+                defaultValue: 0L);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Zone",
-                table: "Characters");
+                name: "CurrentCharId",
+                table: "Users");
         }
     }
 }

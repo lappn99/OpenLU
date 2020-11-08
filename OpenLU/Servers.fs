@@ -13,7 +13,10 @@ open OpenLU.Models.GameModels
 open InfectedRose.Luz
 open OpenLU.DBContext
 open System.Numerics
-
+open OpenLU.CoreTypes.LDF
+open InfectedRose.Lvl
+open System.IO
+open RakDotNet.IO
 module rec Servers = 
     type LUServer(port : int, password : string,name : string) =
             let mutable  _server : IRakNetServer = null
@@ -31,6 +34,10 @@ module rec Servers =
             server.Server.add_NewConnection(fun ipep -> onNewConnection server ipep)
             server.Server.add_Disconnection(fun ipep -> onDisconnect server ipep)
             server.Server.Start()
+        let startServerAsync (server: LUServer) (onReceive) (onNewConnection) (onDisconnect) =
+            async{
+                LUServer.startServer server onReceive onNewConnection onDisconnect
+            } 
 
         let handShake(server: LUServer) (ipep:IPEndPoint) (packet : LUPacket) =
             let response = BitStream()
@@ -152,7 +159,7 @@ module rec Servers =
                 | LUPacketHeader.MinifigListRequest -> WorldServer.minifigListRequest server ipep packet
                 | LUPacketHeader.MinifigCreateRequest -> WorldServer.minifigCreateRequest server ipep packet
                 | LUPacketHeader.UserJoinWorldRequest ->WorldServer.userJoinWorld server ipep packet
-                | LUPacketHeader.ClientLoadComplete -> WorldServer.clientLoaded server ipep packet
+                | LUPacketHeader.ClientLoadComplete -> WorldServer.sendDetailedUserInfo server ipep packet
                 | _ -> LUServer.unknownPacket server packet
             } |> Async.Ignore |> Async.Start
             
@@ -310,19 +317,19 @@ module rec Servers =
 
         let sendWorldInfo (worldServer : LUServer) ( ipep : IPEndPoint) (minifigId) =
             let session = ServiceProvider.GetService<ISessionService>().FindByIp(ipep)
+            
             use db = LUDatabase.getContext()
-            let user =  db.Users.Where(fun u -> u.Id = session.Value.UserId)
+            let user =  db.Users.Where(fun u -> u.Id = session.Value.UserId).Single()
             let character = db.Characters.Where(fun c -> c.Id = minifigId).Single()
+            user.CurrentCharId <- character.Id
             use cdContext = CDClientDatabase.getContext()
             let zone = cdContext.ZoneTable.ToArray().Where(fun z -> uint16 z.ZoneId.Value = character.Zone).Single()
             
-            
             let luzFile = LUResources.getZone zone.ZoneName
-            
-
             let response = BitStream()
             response.WriteUInt64(uint64 LUPacketHeader.WorldInfo)
             response.WriteUInt16(uint16 zone.ZoneId.Value)
+            printfn "Sending world info for zone: %d" zone.ZoneId.Value
             response.WriteUInt16(uint16 0)
             response.WriteUInt32(uint32 0)
             response.WriteUInt32(uint32 0x20b8087c)
@@ -331,17 +338,43 @@ module rec Servers =
             response.WriteFloat(luzFile.SpawnPoint.Y) //y
             response.WriteFloat(luzFile.SpawnPoint.Z) //z
             response.WriteUInt32(uint32 0)
+            db.SaveChanges() |> ignore
             worldServer.Server.Send(response, ipep)
 
         let userJoinWorld (worldServer : LUServer) ( ipep : IPEndPoint) (packet : LUPacket) =
             let minifig = packet.Body.ReadLong()
             sendWorldInfo worldServer ipep minifig
 
-        let clientLoaded (worldServer : LUServer) ( ipep : IPEndPoint) (packet : LUPacket) =
+        let sendDetailedUserInfo (worldServer : LUServer) ( ipep : IPEndPoint) (packet : LUPacket)=
+            let zoneId = packet.Body.ReadUInt16()
             let session = ServiceProvider.GetService<ISessionService>().FindByIp(ipep)
+            let userId = session.Value.UserId
+            use dbContext = LUDatabase.getContext()
             
-            printfn "Session %s loading into zone %d " session.Value.UserKey (packet.Body.ReadUInt16())
-            
+            let charId = dbContext.Users.Where(fun u -> u.Id = userId).Single().CurrentCharId
+            let character = dbContext.Characters.Where(fun c-> c.Id = charId).Single()
+            let ldf  =  [|{key="objid";dataType=LDFDataType.OBJID;value = int64 charId};
+                        {key = "template";dataType = LDFDataType.S32;value=int32 1}
+                        |] 
+            let serialzed =(LDF.serializeBinary (Seq.ofArray ldf))
+            let compressed = serialzed |> OpenLU.Tools.Compression.Zlib.compress
+            let response = BitStream()
+            let compressedSize = uint32(Array.length compressed)
+            response.WriteUInt64(uint64 LUPacketHeader.DetailedUserInfo)
+            response.WriteUInt32(compressedSize + uint32 9)
+            response.WriteUInt8(uint8 1)
+            response.WriteUInt32(uint32 (Array.length serialzed))
+            response.WriteUInt32(compressedSize)
+            response.Write(compressed)
+            printfn "Sending detailed user info"
+            worldServer.Server.Send(response,ipep)
+
+           
+
+
+
+
+
             
             
 

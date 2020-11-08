@@ -120,6 +120,9 @@ namespace OpenLU.DBContext.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<long>("CurrentCharId")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Password")
                         .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
 
