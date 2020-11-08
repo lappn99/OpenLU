@@ -63,8 +63,4 @@
     <PackageReference Update="FSharp.Core" Version="5.0.0" />
   </ItemGroup>
 
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="copy $(ProjectDir)..\OpenLU.DBContext\cdclient.db $(OutDir)cdclient.db" />
-  </Target>
-
 </Project>

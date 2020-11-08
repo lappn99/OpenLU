@@ -5,7 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="setup.fsx" />
     <Content Include="cfg.json" />
     <Compile Include="ConfigurationProvider.fs" />
   </ItemGroup>

@@ -27,8 +27,4 @@
     <ProjectReference Include="..\OpenLU.Models\OpenLU.Models.fsproj" />
   </ItemGroup>
 
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="copy $(ProjectDir)cdclient.db $(ProjectDir)$(OutDir)&#xD;&#xA;" />
-  </Target>
-
 </Project>
