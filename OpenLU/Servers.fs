@@ -354,15 +354,14 @@ module rec Servers =
             let charId = dbContext.Users.Where(fun u -> u.Id = userId).Single().CurrentCharId
             let character = dbContext.Characters.Where(fun c-> c.Id = charId).Single()
             let ldf  =  [|{key="objid";dataType=LDFDataType.OBJID;value = int64 charId};
-                        {key = "template";dataType = LDFDataType.S32;value=int32 1}
-                        |] 
+                        {key = "template";dataType = LDFDataType.S32;value=int32 1}|] 
             let serialzed =(LDF.serializeBinary (Seq.ofArray ldf))
-            let compressed = serialzed |> OpenLU.Tools.Compression.Zlib.compress
+            let compressed = serialzed |> LDF.compress
             let response = BitStream()
             let compressedSize = uint32(Array.length compressed)
             response.WriteUInt64(uint64 LUPacketHeader.DetailedUserInfo)
             response.WriteUInt32(compressedSize + uint32 9)
-            response.WriteUInt8(uint8 1)
+            response.WriteByte(byte 1)
             response.WriteUInt32(uint32 (Array.length serialzed))
             response.WriteUInt32(compressedSize)
             response.Write(compressed)

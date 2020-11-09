@@ -99,7 +99,7 @@ module rec CoreTypes =
                     | LDFDataType.S32 -> writer.Write(ldfEntry.value :?> int32) |> ignore
                     | LDFDataType.FLOAT -> writer.Write(ldfEntry.value :?> float32) |> ignore
                     | LDFDataType.U32 -> writer.Write( ldfEntry.value :?> uint32) |> ignore
-                    | LDFDataType.BOOLEAN -> writer.Write(ldfEntry.value :?> uint8) |> ignore
+                    | LDFDataType.BOOLEAN -> writer.WriteBit(ldfEntry.value :?> bool) |> ignore
                     | LDFDataType.S64 -> writer.Write( ldfEntry.value :?> int64) |> ignore
                     | LDFDataType.OBJID -> writer.Write(ldfEntry.value :?> Int64) |> ignore
                     | _ -> printfn "Unknown datatype: %s" ldfEntry.key
@@ -114,7 +114,7 @@ module rec CoreTypes =
             let checksumArray  = BitConverter.GetBytes(checksum)
             Array.Reverse checksumArray
             
-            let buffer : byte[] = [|byte 0x78;byte 0x9C|]
+            let buffer : byte[] = [|byte 0x78;byte 0xDA|]
             let buffer = Array.append buffer compressed 
             Array.append buffer checksumArray
 
