@@ -7,16 +7,13 @@ open OpenLU.Configuration
 
 
 module LUDatabase =
-    let private initContext() = 
+        
+    let getContext() =
         let provider = ConfigurationProvider.GetConfig().["provider"]
         match provider.ToLower() with
             | "mysql" -> new MySqlContext() :> BaseContext
             | "sqlite" -> new SqliteContext() :> BaseContext
             | _ -> new MySqlContext() :> BaseContext
-
-
-        
-    let getContext() = initContext()
 
 module CDClientDatabase = 
     let getContext() =  new CDContext()

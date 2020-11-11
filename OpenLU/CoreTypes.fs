@@ -54,15 +54,6 @@ module rec CoreTypes =
        {
         UserId : int
         UserKey: string} 
-    module Events =
-        
-        type NewConnectionEvent = delegate of IPEndPoint -> unit
-        type HandlePacketEvent = delegate of IPEndPoint * byte[] ->unit
-        type DisconnectionEvent = delegate of IPEndPoint -> unit
-        type ClientPacketEvent = delegate of IPEndPoint * LUPacket -> unit
-        type HandshakeEvent = delegate of IPEndPoint * LUPacket -> unit
-        type LoginEvent = delegate of IPEndPoint * LUPacket -> unit
-
 
     module LDF =
         type LDFDataType =
@@ -92,7 +83,7 @@ module rec CoreTypes =
                     
                 
                 let dataType = ldfEntry.dataType
-                let something : byte[] = Array.create (keylen - ldfEntry.key.Length * 1) (byte 0)
+                
                 writer.Write(0) |>ignore
                 
                 
