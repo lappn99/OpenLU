@@ -342,3 +342,4 @@ healthchecksdb
 /OpenLU.Configuration/cfg.json
 /OpenLU.DBContext/Migrataions/*.cs
 /OpenLU.DBContext/Migrataions/Base/*.cs
+*.db
