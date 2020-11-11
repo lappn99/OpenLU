@@ -20,8 +20,6 @@ Thanks to [Wincent01](https://github.com/Wincent01)  and [yuwui](https://github.
 * Documentation
 * Comments
 * Load player in world
-* Create setup tool (Seperate project/repository)
-* Implement Sqlite provider/context
 
 ## Installation
 
