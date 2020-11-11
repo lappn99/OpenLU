@@ -3,7 +3,7 @@
 
 # OpenLU
 
-My own implementation of a Lego Universe server emulator in F# (C# for EntityFramework stuff)
+Lego Universe server emulator in F# (C# for EntityFramework stuff)
 
 Find similar projects here
 
@@ -44,3 +44,7 @@ Thanks to [Wincent01](https://github.com/Wincent01)  and [yuwui](https://github.
     * Example: "luResources": "D:\\Users\\Nathan\\Documents\\LU Complete Client\\LU Complete Client\\LEGO Universe\\client\\res"
 * Open command line In OpenLU.DBContext and run `dotnet ef database update` this should update the database (Ill simplify this process later)
 * Use the 'fdb_to_sqlite' python script to convert cdclient.fdb to cdclient.db
+
+
+## Contribution
+Feel free to contribute anytime, all help is appreciated
