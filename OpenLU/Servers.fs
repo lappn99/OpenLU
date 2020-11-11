@@ -10,13 +10,11 @@ open System.Linq
 open OpenLU.CoreTypes.Enums
 open Microsoft.FSharp.Collections
 open OpenLU.Models.GameModels
-open InfectedRose.Luz
 open OpenLU.DBContext
-open System.Numerics
 open OpenLU.CoreTypes.LDF
-open InfectedRose.Lvl
-open System.IO
-open RakDotNet.IO
+open OpenLU.Replica
+
+
 module rec Servers = 
     type LUServer(port : int, password : string,name : string) =
             let mutable  _server : IRakNetServer = null
@@ -24,7 +22,7 @@ module rec Servers =
             member this.Password with get() = password
             member this.Server with get() = _server and set(v : IRakNetServer) = _server <- v
             member this.Name with get() = name
-
+            
             
     module LUServer =
         let startServer(server: LUServer) (onReceive) (onNewConnection) (onDisconnect)  = 
@@ -66,6 +64,18 @@ module rec Servers =
             //server.HandlerMap.[luPacket.Header].DynamicInvoke(ipep,luPacket) |> ignore
         let unknownPacket (server : LUServer) (packet :LUPacket) =
             printfn "Unkown packet %X sent to server %s" (uint32 packet.Header) server.Name
+
+        let sendGameMessage<'T> (server : LUServer)  (ipep : IPEndPoint) (messageInfo : GameMessage.GameMessageInfo) (messageSerializer) (message: 'T)=
+            let response = BitStream()
+            
+            response.WriteUInt64(uint64 LUPacketHeader.ServerGameMessage)
+            response.WriteInt64(messageInfo.objectId)
+            response.WriteUInt16(messageInfo.messageId)
+            messageSerializer(response, message)
+            server.Server.Send(response,ipep)
+
+
+
 
     module AuthServer = 
         let handleAuthPacket (server : LUServer)  (ipep : IPEndPoint) (data : byte[]) =
@@ -205,8 +215,8 @@ module rec Servers =
             
             response.WriteInt64(minifig.Id)
             response.WriteUInt32(uint32 0)
-            response.WriteString(minifig.DisplayName, wide = true)
-            response.WriteString(minifig.Name,wide = true)
+            response.WriteString(minifig.Name, wide = true)
+            response.WriteString("", wide = true)
             response.WriteByte(byte 0)
             response.WriteByte(byte 0)
             response.WriteUInt32(minifig.HeadColor)
@@ -351,22 +361,33 @@ module rec Servers =
             let userId = session.Value.UserId
             use dbContext = LUDatabase.getContext()
             
-            let charId = dbContext.Users.Where(fun u -> u.Id = userId).Single().CurrentCharId
-            let character = dbContext.Characters.Where(fun c-> c.Id = charId).Single()
+            let charId = dbContext.Users.Where(fun u -> u.Id = userId).SingleOrDefault().CurrentCharId
+            let character = dbContext.Characters.Where(fun c-> c.Id = charId).SingleOrDefault()
+            
             let ldf  =  [|{key="objid";dataType=LDFDataType.OBJID;value = int64 charId};
                         {key = "template";dataType = LDFDataType.S32;value=int32 1}|] 
+
             let serialzed =(LDF.serializeBinary (Seq.ofArray ldf))
             let compressed = serialzed |> LDF.compress
             let response = BitStream()
             let compressedSize = uint32(Array.length compressed)
+
             response.WriteUInt64(uint64 LUPacketHeader.DetailedUserInfo)
             response.WriteUInt32(compressedSize + uint32 9)
             response.WriteByte(byte 1)
             response.WriteUInt32(uint32 (Array.length serialzed))
             response.WriteUInt32(compressedSize)
             response.Write(compressed)
+
             printfn "Sending detailed user info"
             worldServer.Server.Send(response,ipep)
+            let player : GameObject.GameObjectInformation = {objectId = charId;Lot = 1;objectName = character.Name;timeSinceCreation = uint32 0}
+            let construction = Replica.constructObject player
+            worldServer.Server.Send(construction,ipep)
+
+            LUServer.sendGameMessage worldServer ipep {messageId = uint16 1642;objectId = charId} (fun (serializer, message) -> printfn "Server done loading objects") 0
+            LUServer.sendGameMessage worldServer ipep {messageId = uint16 509;objectId = charId} (fun (serializer, message) -> printfn "Player ready") 0
+
 
            
 

@@ -23,7 +23,7 @@ module rec CoreTypes =
             | WorldInfo = 0x02000553
             | ClientLoadComplete = 0x13000453
             | DetailedUserInfo = 0x04000553
-
+            | ServerGameMessage= 0x0c000553
 
         type LoginResponse =
              SUCCESS = 0x01
@@ -31,6 +31,11 @@ module rec CoreTypes =
             | INVALID_PERM = 0x03
             | INVALID_LOGIN_INFO = 0x06
             | ACCOUNT_LOCKED = 0x07
+
+        type ReplicaPacket =
+            ReplicaConstruction = 0x24
+            |ReplicaSerialization = 0x27
+            |ReplicaDestruction = 0x25
 
 
     type LUPacket = 
@@ -78,21 +83,25 @@ module rec CoreTypes =
 
 
             let serializeEntry (ldfEntry : ldfEntry) (writer : BitWriter) =
-                let keylen = ldfEntry.key.Length
-                writer.Write(uint8 (keylen * 2)) |> ignore
+                let keylen = String.length ldfEntry.key
+                writer.Write(byte (keylen * 2)) |> ignore
                 for char in ldfEntry.key.ToCharArray() do
                     writer.Write(byte char)|>ignore
                     writer.Write(byte 0)|>ignore
+                    
+                    
+                
                 let dataType = ldfEntry.dataType
-                writer.Write(uint8 dataType)|>ignore
+                let something : byte[] = Array.create (keylen - ldfEntry.key.Length * 1) (byte 0)
+                writer.Write(0) |>ignore
                 
                 
                 let writeString str (writer : BitWriter) =
                     let string = str.ToString()
                     writer.Write(String.length string)
                     for char in string.ToCharArray() do
-                        writer.Write(uint8 char)|>ignore
-                        writer.Write(uint8 0)|>ignore
+                        writer.Write(byte char)|>ignore
+                        writer.Write(byte 0)|>ignore
 
                 match dataType with
                     | LDFDataType.STRING ->  writeString (ldfEntry.value) |> ignore
@@ -117,6 +126,20 @@ module rec CoreTypes =
             let buffer : byte[] = [|byte 0x78;byte 0xDA|]
             let buffer = Array.append buffer compressed 
             Array.append buffer checksumArray
+
+        module GameMessage =
+            type GameMessageInfo = {
+                messageId : uint16;
+                objectId : int64
+            
+            }
+
+            
+            
+
+
+
+            
 
                     
 
