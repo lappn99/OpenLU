@@ -4,86 +4,85 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OpenLU.DBContext;
 
-namespace OpenLU.DBContext.Migrations
+namespace OpenLU.DBContext.Migrations.Base
 {
-    [DbContext(typeof(MySqlContext))]
-    partial class MySqlContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(BaseContext))]
+    partial class BaseContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "3.1.9")
-                .HasAnnotation("Relational:MaxIdentifierLength", 64);
+                .HasAnnotation("ProductVersion", "3.1.9");
 
             modelBuilder.Entity("OpenLU.Models.GameModels+Character", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("DisplayName")
-                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+                        .HasColumnType("TEXT");
 
                     b.Property<uint>("Eyebrows")
-                        .HasColumnType("int unsigned");
+                        .HasColumnType("INTEGER");
 
                     b.Property<uint>("Eyes")
-                        .HasColumnType("int unsigned");
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("FreeToPlay")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("INTEGER");
 
                     b.Property<uint>("HairColor")
-                        .HasColumnType("int unsigned");
+                        .HasColumnType("INTEGER");
 
                     b.Property<uint>("HairStyle")
-                        .HasColumnType("int unsigned");
+                        .HasColumnType("INTEGER");
 
                     b.Property<uint>("Head")
-                        .HasColumnType("int unsigned");
+                        .HasColumnType("INTEGER");
 
                     b.Property<uint>("HeadColor")
-                        .HasColumnType("int unsigned");
+                        .HasColumnType("INTEGER");
 
                     b.Property<uint>("LH")
-                        .HasColumnType("int unsigned");
+                        .HasColumnType("INTEGER");
 
                     b.Property<ulong>("LastLogin")
-                        .HasColumnType("bigint unsigned");
+                        .HasColumnType("INTEGER");
 
                     b.Property<uint>("LastMapClone")
-                        .HasColumnType("int unsigned");
+                        .HasColumnType("INTEGER");
 
                     b.Property<ushort>("LastMapInstance")
-                        .HasColumnType("smallint unsigned");
+                        .HasColumnType("INTEGER");
 
                     b.Property<uint>("Mouth")
-                        .HasColumnType("int unsigned");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
-                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+                        .HasColumnType("TEXT");
 
                     b.Property<uint>("PantsColor")
-                        .HasColumnType("int unsigned");
+                        .HasColumnType("INTEGER");
 
                     b.Property<uint>("PantsStyle")
-                        .HasColumnType("int unsigned");
+                        .HasColumnType("INTEGER");
 
                     b.Property<uint>("RH")
-                        .HasColumnType("int unsigned");
+                        .HasColumnType("INTEGER");
 
                     b.Property<uint>("ShirtColor")
-                        .HasColumnType("int unsigned");
+                        .HasColumnType("INTEGER");
 
                     b.Property<uint>("ShirtStyle")
-                        .HasColumnType("int unsigned");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<ushort>("Zone")
-                        .HasColumnType("smallint unsigned");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -96,16 +95,16 @@ namespace OpenLU.DBContext.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
                     b.Property<long>("CharacterId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("Equipped")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("INTEGER");
 
                     b.Property<uint>("Lot")
-                        .HasColumnType("int unsigned");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -118,16 +117,16 @@ namespace OpenLU.DBContext.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<long>("CurrentCharId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Password")
-                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Username")
-                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -138,6 +137,15 @@ namespace OpenLU.DBContext.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CurrentCharId = 0L,
+                            Password = "lego!",
+                            Username = "MrSnrub"
+                        });
                 });
 
             modelBuilder.Entity("OpenLU.Models.GameModels+Character", b =>
