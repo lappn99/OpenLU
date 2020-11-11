@@ -13,7 +13,7 @@ module LUDatabase =
         match provider.ToLower() with
             | "mysql" -> new MySqlContext() :> BaseContext
             | "sqlite" -> new SqliteContext() :> BaseContext
-            | _ -> new SqliteContext() :> BaseContext
+            | _ -> new MySqlContext() :> BaseContext
 
 module CDClientDatabase = 
     let getContext() =  new CDContext()
