@@ -343,3 +343,4 @@ healthchecksdb
 /OpenLU.DBContext/Migrataions/*.cs
 /OpenLU.DBContext/Migrataions/Base/*.cs
 *.db
+/OpenLU.DBContext/Migrations
