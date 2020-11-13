@@ -6,6 +6,7 @@ open System.IO.Compression
 open System.IO
 open RakDotNet.IO
 open OpenLU.Tools.Compression
+open System.Numerics
 module rec CoreTypes =
     
     module Enums =
@@ -34,8 +35,11 @@ module rec CoreTypes =
 
         type ReplicaPacket =
             ReplicaConstruction = 0x24
-            |ReplicaSerialization = 0x27
-            |ReplicaDestruction = 0x25
+            | ReplicaSerialization = 0x27
+            | ReplicaDestruction = 0x25
+        type GameMessage =
+            ServerDoneLoadingObjects = 0x66A
+            | PlayerReader = 0x1FD
 
 
     type LUPacket = 
@@ -54,6 +58,15 @@ module rec CoreTypes =
        {
         UserId : int
         UserKey: string} 
+
+    type Transform = {
+        Position : Vector3;
+        Rotation : Vector4;
+        Velocity : Vector3;
+
+    }
+
+
 
     module LDF =
         type LDFDataType =
@@ -120,7 +133,7 @@ module rec CoreTypes =
 
         module GameMessage =
             type GameMessageInfo = {
-                messageId : uint16;
+                messageId : Enums.GameMessage;
                 objectId : int64
             
             }

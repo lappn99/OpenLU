@@ -13,7 +13,7 @@ open OpenLU.Models.GameModels
 open OpenLU.DBContext
 open OpenLU.CoreTypes.LDF
 open OpenLU.Replica
-
+open OpenLU.Zone
 
 module rec Servers = 
     type LUServer(port : int, password : string,name : string) =
@@ -44,10 +44,9 @@ module rec Servers =
             response.WriteUInt32(clientVersion)
             response.WriteUInt32((uint32)0x93)
             response.WriteUInt32((uint32)4)
-            let currentProcess = Process.GetCurrentProcess()
-            response.WriteUInt32((uint32)currentProcess.Id)
-            response.WriteString("127.0.0.1",33)
-            
+            using(Process.GetCurrentProcess()) (fun currentProcess -> 
+                response.WriteUInt32((uint32)currentProcess.Id)
+            )
             server.Server.Send(response,ipep) |> ignore
 
         let newConnection (server : LUServer) (ipep : IPEndPoint) = 
@@ -70,7 +69,7 @@ module rec Servers =
             
             response.WriteUInt64(uint64 LUPacketHeader.ServerGameMessage)
             response.WriteInt64(messageInfo.objectId)
-            response.WriteUInt16(messageInfo.messageId)
+            response.WriteUInt16(uint16 messageInfo.messageId)
             messageSerializer(response, message)
             server.Server.Send(response,ipep)
 
@@ -131,7 +130,7 @@ module rec Servers =
             response.WriteString(err,err.Length,wide = true)
             response.WriteInt((int32)4)
             authServer.Server.Send(response,ipep)
-
+            
             if(loginResult = LoginResponse.SUCCESS) then
                 let userId = query{
                     for user in users do
@@ -151,10 +150,13 @@ module rec Servers =
             response.WriteUInt32(client_version)
             response.WriteUInt32((uint32)0x93)
             response.WriteUInt32((uint32)1)
-            let currentProcess = Process.GetCurrentProcess()
-            response.WriteUInt32((uint32)currentProcess.Id)
+            using(Process.GetCurrentProcess()) (fun currentProcess -> 
+                response.WriteUInt32((uint32)currentProcess.Id)
+            )
+            
             response.WriteString("127.0.0.1",33)
             authServer.Server.Send(response,ipep) |> ignore
+            
             
     module WorldServer = 
         
@@ -210,6 +212,8 @@ module rec Servers =
             
             Seq.iter(fun minifig -> writeMinifig response minifig db ) minifigs
             worldServer.Server.Send(response)
+            
+            
             
         let writeMinifig (response :BitStream) (minifig: Character) (context : BaseContext) =
             
@@ -294,8 +298,6 @@ module rec Servers =
             packet.Body.ReadUInt8() |> ignore
             newChar.Zone <- uint16 1000
             newChar.User <- user
-            
-
 
             let brickColor = CDClientDatabase.getBrickColor cdContext newChar.ShirtColor
             let shirtName = sprintf "%s Shirt %d" brickColor.Description newChar.ShirtStyle
@@ -324,6 +326,8 @@ module rec Servers =
             response.WriteUInt8((byte)0)
             worldServer.Server.Send(response,ipep)
             minifigListRequest worldServer ipep packet
+            
+            
 
         let sendWorldInfo (worldServer : LUServer) ( ipep : IPEndPoint) (minifigId) =
             let session = ServiceProvider.GetService<ISessionService>().FindByIp(ipep)
@@ -332,17 +336,21 @@ module rec Servers =
             let user =  db.Users.Where(fun u -> u.Id = session.Value.UserId).Single()
             let character = db.Characters.Where(fun c -> c.Id = minifigId).Single()
             user.CurrentCharId <- character.Id
-            use cdContext = CDClientDatabase.getContext()
-            let zone = cdContext.ZoneTable.ToArray().Where(fun z -> uint16 z.ZoneId.Value = character.Zone).Single()
+            (*let zone = using(CDClientDatabase.getContext()) (fun cdContext ->
+                cdContext.ZoneTable.ToArray().Where(fun z -> uint16 z.ZoneId.Value = character.Zone).Single()
+            )*)
             
-            let luzFile = LUResources.getZone zone.ZoneName
+            let zone = Zone.getZones.Value.Where(fun z -> z.zoneId = character.Zone).Single()
+
+
+            let luzFile = zone.luzFile
             let response = BitStream()
             response.WriteUInt64(uint64 LUPacketHeader.WorldInfo)
-            response.WriteUInt16(uint16 zone.ZoneId.Value)
-            printfn "Sending world info for zone: %d" zone.ZoneId.Value
+            response.WriteUInt16(uint16 zone.zoneId)
+            printfn "Sending world info for zone: %d" zone.zoneId
             response.WriteUInt16(uint16 0)
             response.WriteUInt32(uint32 0)
-            response.WriteUInt32(uint32 0x20b8087c)
+            response.WriteUInt32(uint32 zone.checksum)
             response.WriteUInt16(uint16 0)
             response.WriteFloat(luzFile.SpawnPoint.X) //x
             response.WriteFloat(luzFile.SpawnPoint.Y) //y
@@ -350,6 +358,7 @@ module rec Servers =
             response.WriteUInt32(uint32 0)
             db.SaveChanges() |> ignore
             worldServer.Server.Send(response, ipep)
+            
 
         let userJoinWorld (worldServer : LUServer) ( ipep : IPEndPoint) (packet : LUPacket) =
             let minifig = packet.Body.ReadLong()
@@ -359,11 +368,13 @@ module rec Servers =
             let zoneId = packet.Body.ReadUInt16()
             let session = ServiceProvider.GetService<ISessionService>().FindByIp(ipep)
             let userId = session.Value.UserId
-            use dbContext = LUDatabase.getContext()
+            let (charId,character) = using( LUDatabase.getContext()) (fun dbContext ->
+                let charId = dbContext.Users.Where(fun u -> u.Id = userId).SingleOrDefault().CurrentCharId
+                let character = dbContext.Characters.Where(fun c-> c.Id = charId).SingleOrDefault()
+                (charId,character)
+            )
             
-            let charId = dbContext.Users.Where(fun u -> u.Id = userId).SingleOrDefault().CurrentCharId
-            let character = dbContext.Characters.Where(fun c-> c.Id = charId).SingleOrDefault()
-            
+
             let ldf  =  [|{key="objid";dataType=LDFDataType.OBJID;value = int64 charId};
                         {key = "template";dataType = LDFDataType.S32;value=int32 1}|] 
 
@@ -381,21 +392,16 @@ module rec Servers =
 
             printfn "Sending detailed user info"
             worldServer.Server.Send(response,ipep)
-            let player : GameObject.GameObjectInformation = {objectId = charId;Lot = 1;objectName = character.Name;timeSinceCreation = uint32 0}
+            let player : GameObject.GameObjectInformation = {
+                objectId = charId;
+                Lot = 1;
+                objectName = character.Name;
+                timeSinceCreation = uint32 0;
+                parent = None;
+                children = List.empty
+            }
             let construction = Replica.constructObject player
             worldServer.Server.Send(construction,ipep)
 
-            LUServer.sendGameMessage worldServer ipep {messageId = uint16 1642;objectId = charId} (fun (serializer, message) -> printfn "Server done loading objects") 0
-            LUServer.sendGameMessage worldServer ipep {messageId = uint16 509;objectId = charId} (fun (serializer, message) -> printfn "Player ready") 0
-
-
-           
-
-
-
-
-
-            
-            
-
-
+            LUServer.sendGameMessage worldServer ipep {messageId = GameMessage.ServerDoneLoadingObjects;objectId = charId} (fun (serializer, message) -> printfn "Server done loading objects") 0
+            LUServer.sendGameMessage worldServer ipep {messageId = GameMessage.PlayerReader;objectId = charId} (fun (serializer, message) -> printfn "Player ready") 0

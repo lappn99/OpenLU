@@ -6,6 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="zones.txt" />
+    <Compile Include="Components.fs" />
     <Compile Include="Tools.fs" />
     <Compile Include="Extensions.fs" />
     <Compile Include="CoreTypes.fs" />
@@ -14,6 +16,7 @@
     <Compile Include="LUResources.fs" />
     <Compile Include="SessionCache.fs" />
     <Compile Include="LUDatabase.fs" />
+    <Compile Include="Zone.fs" />
     <Compile Include="Servers.fs" />
     <Compile Include="LegoUniverse.fs" />
     <Compile Include="Program.fs" />
@@ -62,5 +65,9 @@
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="5.0.0" />
   </ItemGroup>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="copy $(ProjectDir)zones.txt $(TargetDir)" />
+  </Target>
 
 </Project>

@@ -6,13 +6,14 @@ module Tools =
     module Compression =
         module Zlib =
             let compress (buffer : byte[]) =
-                use compressStream = new MemoryStream()
-                use deflateStream = new DeflateStream(compressStream,CompressionLevel.Optimal)
-                deflateStream.Write(buffer,0,Array.length buffer)
-                deflateStream.Close()
-                compressStream.Close()
-                compressStream.ToArray()
-                
+                using(new MemoryStream()) (fun compressSteam ->
+                    using(new DeflateStream(compressSteam,CompressionLevel.Optimal)) (fun deflateStream ->
+                        deflateStream.Write(buffer,0,Array.length buffer)
+                        deflateStream.Close()
+                        compressSteam.Close()
+                        compressSteam.ToArray()
+                        )
+                    )
             let adler32Checksum (buffer: byte[]) =
                 let adlerMod = 65521
                 let len = Array.length buffer

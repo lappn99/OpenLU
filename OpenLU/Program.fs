@@ -11,8 +11,6 @@ open OpenLU.Services
 open OpenLU.LUResources
 [<EntryPoint>]
 let main argv =
-    
-    
     Services.ServiceProvider.RegisterService<ISessionService>(SessionCache())
     Services.ServiceProvider.RegisterService<IResourceService>(LocalResourceProvider())
     LegoUniverse.Start()
