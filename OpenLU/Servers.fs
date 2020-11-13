@@ -12,9 +12,10 @@ open Microsoft.FSharp.Collections
 open OpenLU.Models.GameModels
 open OpenLU.DBContext
 open OpenLU.CoreTypes.LDF
-open OpenLU.Replica
+open OpenLU.GameComponents
+open OpenLU.CoreTypes
 open OpenLU.Zone
-
+open System.Numerics
 module rec Servers = 
     type LUServer(port : int, password : string,name : string) =
             let mutable  _server : IRakNetServer = null
@@ -419,9 +420,14 @@ module rec Servers =
                 objectName = character.Name;
                 timeSinceCreation = uint32 0;
                 parent = None;
-                children = List.empty
+                children = List.empty;
+                components = List.empty
             }
+
             let player: GameObject.Player = {objectInfo = playerInfo}
+            let transform = Transform(zone.luzFile.SpawnPoint,zone.luzFile.SpawnRotation,player.objectInfo)
+            GameObject.addComponent (player.objectInfo) (transform)
+            Zone.addPlayerToZone zone player
             let construction = Replica.constructObject player.objectInfo
             
             worldServer.Server.Send(construction,ipep)

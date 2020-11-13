@@ -6,17 +6,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="testing.fsx" />
     <Content Include="zones.txt" />
-    <Compile Include="Components.fs" />
     <Compile Include="Tools.fs" />
+    <Compile Include="LUDatabase.fs" />
+    <Compile Include="LUResources.fs" />
     <Compile Include="Extensions.fs" />
     <Compile Include="CoreTypes.fs" />
+    <Compile Include="GameComponents.fs" />
     <Compile Include="Replica.fs" />
-    <Compile Include="Services.fs" />
-    <Compile Include="LUResources.fs" />
-    <Compile Include="SessionCache.fs" />
-    <Compile Include="LUDatabase.fs" />
     <Compile Include="Zone.fs" />
+    <Compile Include="Services.fs" />
+    <Compile Include="SessionCache.fs" />
     <Compile Include="Servers.fs" />
     <Compile Include="LegoUniverse.fs" />
     <Compile Include="Program.fs" />

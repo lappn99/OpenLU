@@ -9,6 +9,7 @@ open OpenLU.Servers
 open OpenLU.Services.ServiceProvider
 open OpenLU.Services
 open OpenLU.LUResources
+open OpenLU.Replica
 [<EntryPoint>]
 let main argv =
     Services.ServiceProvider.RegisterService<ISessionService>(SessionCache())
@@ -16,4 +17,7 @@ let main argv =
     LegoUniverse.Start()
     
     Console.ReadKey() |> ignore
+    
+
+
     0

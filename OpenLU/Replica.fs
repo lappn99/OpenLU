@@ -9,13 +9,34 @@ open InfectedRose.Luz
 open System.IO
 open OpenLU.CoreTypes.Enums
 open System.Numerics
+open OpenLU.CoreTypes.GameObject
+open OpenLU.CoreTypes
+open System.Linq
+open System.Reflection
+open OpenLU.GameComponents
 module rec Replica = 
     let random = new Random()
     let objectId()  = random.LongRandom(100000000000000000L, 999999999999999999L)
 
-    
+    let getObjectComponenents lot parent =
+        use cdContext = CDClientDatabase.getContext()
+        let requiredComponents = cdContext.ComponentsRegistry.ToArray().Where(fun c-> int c.Id.Value = lot).Select(fun c -> int c.ComponentType.Value).ToArray()
+        let assembly = Assembly.GetExecutingAssembly()
+        let componentTypes = assembly.GetTypes().Where(fun t-> t.Namespace = "OpenLU" && Attribute.GetCustomAttribute(t,typeof<ReplicaComponents.ComponentTypeAttribute>) <> null).ToArray()
 
-    let constructObject<'T> (objectInfo : GameObject.GameObjectInformation) = 
+        seq{
+            for componentType in componentTypes do
+                let attr = Attribute.GetCustomAttribute(componentType,typeof<ReplicaComponents.ComponentTypeAttribute>) 
+                let componentAttribute : ReplicaComponents.ComponentTypeAttribute = downcast attr
+            
+                if requiredComponents.Contains(componentAttribute.ComponentType) then
+                    let args = [|parent|]
+                    yield  Activator.CreateInstance(componentType,args) :?> Component
+            } |> Array.ofSeq
+                
+                
+     
+    let constructObject<'T> (objectInfo : GameObjectInformation) = 
         let bitStream = BitStream()
         
         bitStream.WriteByte(byte ReplicaPacket.ReplicaConstruction)
@@ -37,8 +58,6 @@ module rec Replica =
         bitStream.WriteBit(false) //World state
         bitStream.WriteBit(false) //Has gm level
         bitStream.WriteBit(true)  //Hierarchy
-
-
         match objectInfo.parent with
             | Some(x) -> bitStream.WriteBit(true)
                          bitStream.WriteInt64(x.objectId)
@@ -48,30 +67,22 @@ module rec Replica =
         if objectInfo.children.Length > 0 then
             bitStream.WriteBit(true)
             bitStream.WriteUInt16(uint16 objectInfo.children.Length)
-            List.iter (fun (c : GameObject.GameObjectInformation) -> bitStream.WriteInt64(c.objectId)) objectInfo.children
+            List.iter (fun (c : GameObjectInformation) -> bitStream.WriteInt64(c.objectId)) objectInfo.children
         else
             bitStream.WriteBit(false)
 
+        for comp in objectInfo.components do
+            if comp.GetType().IsSubclassOf(typeof<ReplicaComponents.ReplicaComponent>) then
+                let replicaComponent = comp :?> ReplicaComponents.ReplicaComponent
+                replicaComponent.Construct(bitStream)
 
 
         bitStream.BaseBuffer
+
         
 
 
-    module GameObject =
-        type GameObjectInformation = {
-            objectId : int64;
-            Lot : int32;
-            objectName : string;
-            timeSinceCreation : uint32;
-            parent : Option<GameObjectInformation>;
-            children : List<GameObjectInformation>
-        }
-
-        type Player ={
-            objectInfo : GameObjectInformation
-            
-        }
+    
 
         
 
