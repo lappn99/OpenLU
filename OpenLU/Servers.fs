@@ -22,6 +22,11 @@ module rec Servers =
             member this.Password with get() = password
             member this.Server with get() = _server and set(v : IRakNetServer) = _server <- v
             member this.Name with get() = name
+
+    type WorldServer(port: int, password: string, name:string,zones) =
+        inherit LUServer(port,password,name)
+        let _zones : list<zone> = zones
+        member this.Zones with get() = _zones
             
             
     module LUServer =
@@ -160,13 +165,26 @@ module rec Servers =
             
     module WorldServer = 
         
-        let handleWorldPacket (server : LUServer)  (ipep : IPEndPoint) (data : byte[]) = 
+        let startServer(server: WorldServer) (onReceive) (onNewConnection) (onDisconnect)  = 
+            Console.WriteLine("Starting: {0}",server.Name)
+            server.Server <- RakNetServer(server.Port,server.Password)
+            server.Server.add_PacketReceived(fun (ipep) (data) -> onReceive server ipep data)
+            server.Server.add_NewConnection(fun ipep -> onNewConnection server ipep)
+            server.Server.add_Disconnection(fun ipep -> onDisconnect server ipep)
+            server.Server.Start()
+        let startServerAsync (server: WorldServer) (onReceive) (onNewConnection) (onDisconnect) =
+            async{
+                WorldServer.startServer server onReceive onNewConnection onDisconnect
+            } 
+            
+
+        let handleWorldPacket (server : WorldServer)  (ipep : IPEndPoint) (data : byte[]) = 
         
             let packet = LUPacket data
             let header = packet.Header
             async{
             match header with
-                | LUPacketHeader.HandShake -> LUServer.handShake server ipep packet
+                | LUPacketHeader.HandShake -> LUServer.handShake (server :> LUServer) ipep packet
                 | LUPacketHeader.UserSessionInfo -> WorldServer.userSessionInfo server ipep packet
                 | LUPacketHeader.MinifigListRequest -> WorldServer.minifigListRequest server ipep packet
                 | LUPacketHeader.MinifigCreateRequest -> WorldServer.minifigCreateRequest server ipep packet
@@ -176,6 +194,8 @@ module rec Servers =
             } |> Async.Ignore |> Async.Start
             
 
+
+
         let handleDisconnect server ipep =
             LUServer.disconnection server ipep
             let sessionService = ServiceProvider.GetService<ISessionService>()
@@ -183,7 +203,7 @@ module rec Servers =
             if sessionService.RemoveSession(ipep) then
                 printfn "Session ended: %s" sessionKey.Value.UserKey
 
-        let userSessionInfo (worldServer : LUServer) ( ipep : IPEndPoint) (packet : LUPacket) =
+        let userSessionInfo (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
             let username = packet.Body.ReadString(wide = true)
             let key = packet.Body.ReadString(wide = true)
             let hash = packet.Body.ReadString(32)
@@ -193,7 +213,7 @@ module rec Servers =
                 | Some(session) -> Console.WriteLine("User logged in with session id: {0}", key)
                 | None -> Console.WriteLine("Session not found: {0}",key)
 
-        let minifigListRequest (worldServer : LUServer) ( ipep : IPEndPoint) (packet : LUPacket) =
+        let minifigListRequest (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
             let response = BitStream()
             
             let session = ServiceProvider.GetService<ISessionService>().FindByIp(ipep)
@@ -247,7 +267,7 @@ module rec Servers =
             Seq.iter(fun (i : InventoryItem) -> response.WriteUInt32(uint32 i.Lot)) minifigItems
             
 
-        let minifigCreateRequest (worldServer : LUServer) ( ipep : IPEndPoint) (packet : LUPacket) =
+        let minifigCreateRequest (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
             
             let session = ServiceProvider.GetService<ISessionService>().FindByIp ipep
             let newChar = new Character()
@@ -329,7 +349,7 @@ module rec Servers =
             
             
 
-        let sendWorldInfo (worldServer : LUServer) ( ipep : IPEndPoint) (minifigId) =
+        let sendWorldInfo (worldServer : WorldServer) ( ipep : IPEndPoint) (minifigId) =
             let session = ServiceProvider.GetService<ISessionService>().FindByIp(ipep)
             
             use db = LUDatabase.getContext()
@@ -340,7 +360,7 @@ module rec Servers =
                 cdContext.ZoneTable.ToArray().Where(fun z -> uint16 z.ZoneId.Value = character.Zone).Single()
             )*)
             
-            let zone = Zone.getZones.Value.Where(fun z -> z.zoneId = character.Zone).Single()
+            let zone = worldServer.Zones.Where(fun z -> z.zoneId = character.Zone).Single()
 
 
             let luzFile = zone.luzFile
@@ -360,12 +380,13 @@ module rec Servers =
             worldServer.Server.Send(response, ipep)
             
 
-        let userJoinWorld (worldServer : LUServer) ( ipep : IPEndPoint) (packet : LUPacket) =
+        let userJoinWorld (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
             let minifig = packet.Body.ReadLong()
             sendWorldInfo worldServer ipep minifig
 
-        let sendDetailedUserInfo (worldServer : LUServer) ( ipep : IPEndPoint) (packet : LUPacket)=
+        let sendDetailedUserInfo (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket)=
             let zoneId = packet.Body.ReadUInt16()
+            let zone = worldServer.Zones.Where(fun z -> z.zoneId = zoneId).Single()
             let session = ServiceProvider.GetService<ISessionService>().FindByIp(ipep)
             let userId = session.Value.UserId
             let (charId,character) = using( LUDatabase.getContext()) (fun dbContext ->
@@ -392,7 +413,7 @@ module rec Servers =
 
             printfn "Sending detailed user info"
             worldServer.Server.Send(response,ipep)
-            let player : GameObject.GameObjectInformation = {
+            let playerInfo : GameObject.GameObjectInformation = {
                 objectId = charId;
                 Lot = 1;
                 objectName = character.Name;
@@ -400,8 +421,11 @@ module rec Servers =
                 parent = None;
                 children = List.empty
             }
-            let construction = Replica.constructObject player
+            let player: GameObject.Player = {objectInfo = playerInfo}
+            let construction = Replica.constructObject player.objectInfo
+            
             worldServer.Server.Send(construction,ipep)
-
+            Zone.addPlayerToZone zone player
+            
             LUServer.sendGameMessage worldServer ipep {messageId = GameMessage.ServerDoneLoadingObjects;objectId = charId} (fun (serializer, message) -> printfn "Server done loading objects") 0
             LUServer.sendGameMessage worldServer ipep {messageId = GameMessage.PlayerReader;objectId = charId} (fun (serializer, message) -> printfn "Player ready") 0
