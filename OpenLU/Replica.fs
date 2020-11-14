@@ -15,24 +15,29 @@ open System.Linq
 open System.Reflection
 open OpenLU.GameComponent
 open OpenLU.CoreTypes
+open OpenLU.Attributes
 module rec Replica = 
     let random = new Random()
     let objectId()  = random.LongRandom(100000000000000000L, 999999999999999999L)
 
-    let getReplicaComponenents lot parent =
+    let getReplicaComponenents lot (parent : Object.object) =
         use cdContext = CDClientDatabase.getContext()
         let requiredComponents = cdContext.ComponentsRegistry.ToArray().Where(fun c-> int c.Id.Value = lot).Select(fun c -> int c.ComponentType.Value).ToArray()
         let assembly = Assembly.GetExecutingAssembly()
-        let componentTypes = assembly.GetTypes().Where(fun t-> t.Namespace = "OpenLU" && Attribute.GetCustomAttribute(t,typeof<ReplicaComponent.ComponentTypeAttribute>) <> null).ToArray()
+        let componentTypes = assembly.GetTypes().Where(fun t-> t.Namespace = "OpenLU" && Attribute.GetCustomAttribute(t,typeof<ComponentTypeAttribute>) <> null).ToArray()
 
         seq{
             for componentType in componentTypes do
-                let attr = Attribute.GetCustomAttribute(componentType,typeof<ReplicaComponent.ComponentTypeAttribute>) 
-                let componentAttribute : ReplicaComponent.ComponentTypeAttribute = downcast attr
-            
+                let attr = Attribute.GetCustomAttribute(componentType,typeof<ComponentTypeAttribute>) 
+                let componentAttribute : ComponentTypeAttribute = downcast attr
                 if requiredComponents.Contains(componentAttribute.ComponentType) then
-                    let args = [|parent|]
-                    yield  Activator.CreateInstance(componentType,args) :?> Component
+                    
+                    match componentType with
+                        | _ when componentType = typeof<ReplicaComponent.characterComponent> -> 
+                            yield ReplicaComponent.characterComponent(parent :?> GameObject.player) :> Component.``component``
+                        | _ -> ()
+
+                   
             } |> List.ofSeq
                 
                 

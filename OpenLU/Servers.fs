@@ -430,11 +430,11 @@ module rec Servers =
             }
 
             let player: GameObject.player = GameObject.player(character, playerInfo)
-            let transform = Transform(zone.luzFile.SpawnPoint,zone.luzFile.SpawnRotation,player.ObjectInfo)
+            let transform = transform(zone.luzFile.SpawnPoint,zone.luzFile.SpawnRotation,player)
 
-            let components = Replica.getReplicaComponenents playerInfo.Lot playerInfo
-            let components = Set.ofList ((transform :> Component)::components)
-            Object.addComponents (player.ObjectInfo) (components)
+            let components = Replica.getReplicaComponenents playerInfo.Lot player
+            let components = Set.ofList ((transform :> Component.``component``)::components)
+            CoreTypes.Component.addComponents (player) (components)
             Zone.addPlayerToZone zone player
             let construction = Replica.constructObject player
             

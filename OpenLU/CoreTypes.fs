@@ -57,28 +57,7 @@ module rec CoreTypes =
         end
 
    
-    type Component(gameObject: Object.ObjectInformation, name: string) = 
-        let _gameObject = gameObject
-        let _name = name
-        member this.GameObject with get() = _gameObject
-        member this.Name with get() = _name
-
-        interface IComparable<Component> with
-            member this.CompareTo other =
-                compare this.Name other.Name
-        interface IComparable with
-            member this.CompareTo object =
-                match object with 
-                    | :? Component as other -> (this :> IComparable<_>).CompareTo(other)
-                    | _ -> 1
-        interface IEquatable<Component> with
-            member this.Equals that =
-                this.Name = this.Name
-        override this.Equals other =
-            match other with
-               | :? Component as that -> (this :> IEquatable<_>).Equals other
-               | _ -> false
-        override this.GetHashCode() = hash this.Name
+    
         
 
     type Session = { UserId: int; UserKey: string }
@@ -163,7 +142,7 @@ module rec CoreTypes =
             timeSinceCreation : uint32;
             parent : Option<ObjectInformation>;
             mutable children : List<ObjectInformation>
-            mutable components : Set<Component>
+            mutable components : Set<Component.``component``>
             
         }
         
@@ -172,13 +151,36 @@ module rec CoreTypes =
             member this.ObjectInfo = _objectInfo
 
             
+    module Component =
         
 
+        type component(gameObject: Object.object, name: string) = 
+            let _gameObject = gameObject
+            let _name = name
+            member this.GameObject with get() = _gameObject
+            member this.Name with get() = _name
 
-        let addComponent(gameObject) (comp : 'T) =
-            gameObject.components <- gameObject.components.Add(comp)
-        let addComponents(gameObject) (comps : Set<'T>) =
-            gameObject.components <- Set.union gameObject.components comps
+            interface IComparable<component> with
+                member this.CompareTo other =
+                    compare this.Name other.Name
+            interface IComparable with
+                member this.CompareTo object =
+                    match object with 
+                        | :? component as other -> (this :> IComparable<_>).CompareTo(other)
+                        | _ -> 1
+            interface IEquatable<component> with
+                member this.Equals that =
+                    this.Name = this.Name
+            override this.Equals other =
+                match other with
+                   | :? component as that -> (this :> IEquatable<_>).Equals other
+                   | _ -> false
+            override this.GetHashCode() = hash this.Name
+
+        let addComponent(gameObject : Object.object) (comp : 'T) =
+            gameObject.ObjectInfo.components <- gameObject.ObjectInfo.components.Add(comp)
+        let addComponents(gameObject : Object.object) (comps : Set<'T>) =
+            gameObject.ObjectInfo.components <- Set.union gameObject.ObjectInfo.components comps
             
 
     
