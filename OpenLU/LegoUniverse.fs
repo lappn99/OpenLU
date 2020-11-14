@@ -9,7 +9,8 @@ module LegoUniverse =
             let authServer = LUServer(1001,"3.25 ND1","Auth Server")
             let worldServer = WorldServer(2002,"3.25 ND1","World Server" )
             [|LUServer.startServerAsync authServer AuthServer.handleAuthPacket LUServer.newConnection LUServer.disconnection ;
-            WorldServer.startServerAsync worldServer WorldServer.handleWorldPacket LUServer.newConnection WorldServer.handleDisconnect|] 
+            WorldServer.startServerAsync worldServer WorldServer.handleWorldPacket LUServer.newConnection WorldServer.handleDisconnect;
+            WorldServer.registerZonesAsync worldServer|] 
                 |> Async.Parallel 
                 |> Async.RunSynchronously
             

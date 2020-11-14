@@ -21,9 +21,10 @@ module Zone =
 
     let registerZones() =
         seq {
+            printfn "Registering zones"
             let zonesFile = File.ReadAllLines("zones.txt")
             use cdContext = CDClientDatabase.getContext ()
-            let zoneTable = cdContext.ZoneTable.ToArray()
+            let zoneTable = cdContext.ZoneTable.ToList()
             for line in zonesFile do
                 let (zoneId, checksum) =  line.Split(":") |> (fun arr -> (arr.[0] |> uint16,arr.[1] |> uint32))
 

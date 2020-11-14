@@ -177,12 +177,14 @@ module rec Servers =
         let startServerAsync (server: WorldServer) (onReceive) (onNewConnection) (onDisconnect) =
             async{
                 WorldServer.startServer server onReceive onNewConnection onDisconnect
-                WorldServer.registerZones server
-            } 
+                
+            };  
            
         let registerZones (worldServer : WorldServer) = 
             worldServer.Zones <- List.ofSeq (Zone.registerZones())
-            
+        let registerZonesAsync (worldServer : WorldServer) = async{
+            WorldServer.registerZones worldServer
+        }
 
         let handleWorldPacket (server : WorldServer)  (ipep : IPEndPoint) (data : byte[]) = 
         

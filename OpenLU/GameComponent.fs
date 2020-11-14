@@ -27,7 +27,7 @@ module GameComponent =
             default this.Construct(bitStream) = printfn "Constructing %s" name
 
         //TODO implement components
-        [<ComponentType(4)>]
+        [<ComponentType(4,1)>]
         type characterComponent(parent : GameObject.player) =
             inherit replicaComponent(parent,"Character")
             override this.Construct bitStream = 
