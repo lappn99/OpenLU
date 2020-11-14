@@ -9,31 +9,30 @@ module Zone =
     type zone =
         {
             zoneId: uint16
-            mutable players: list<GameObject.Player>
+            mutable players: list<GameObject.player>
             checksum: uint32
             luzFile: LuzFile 
         }
 
-    let addPlayerToZone (zone: zone) (player: GameObject.Player) = 
-        let playerComponents = getObjectComponenents player.objectInfo.Lot player.objectInfo
-        GameObject.addComponents player.objectInfo playerComponents
+    let addPlayerToZone (zone: zone) (player: GameObject.player) = 
         zone.players <- player::zone.players
 
 
 
     let registerZones() =
-        let zones = seq {
+        seq {
             let zonesFile = File.ReadAllLines("zones.txt")
             use cdContext = CDClientDatabase.getContext ()
+            let zoneTable = cdContext.ZoneTable.ToArray()
             for line in zonesFile do
-                let (zoneId, checksum) = (line.Split(":").[0] |> uint16, line.Split(":").[1] |> uint32)
+                let (zoneId, checksum) =  line.Split(":") |> (fun arr -> (arr.[0] |> uint16,arr.[1] |> uint32))
 
-                let zoneName = cdContext.ZoneTable.ToArray().Where(fun z -> z.ZoneId.Value = int64 zoneId).Single().ZoneName
+                let zoneName = zoneTable.Where(fun z -> z.ZoneId.Value = int64 zoneId).Single().ZoneName
 
                 let luzFile = LUResources.getZone (zoneName)
-
+                printfn "zone %s registered" zoneName
                 yield{ zoneId = zoneId;players = List.empty;checksum = checksum;luzFile = luzFile }
         }
-        Seq.iter (fun z -> (printfn "zone %d registered" z.zoneId)) zones
-        zones
+        
+        
 

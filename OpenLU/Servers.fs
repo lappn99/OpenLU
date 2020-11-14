@@ -12,10 +12,11 @@ open Microsoft.FSharp.Collections
 open OpenLU.Models.GameModels
 open OpenLU.DBContext
 open OpenLU.CoreTypes.LDF
-open OpenLU.GameComponents
+open OpenLU.GameComponent
 open OpenLU.CoreTypes
 open OpenLU.Zone
 open System.Numerics
+open OpenLU.GameObject
 module rec Servers = 
     type LUServer(port : int, password : string,name : string) =
             let mutable  _server : IRakNetServer = null
@@ -24,10 +25,10 @@ module rec Servers =
             member this.Server with get() = _server and set(v : IRakNetServer) = _server <- v
             member this.Name with get() = name
 
-    type WorldServer(port: int, password: string, name:string,zones) =
+    type WorldServer(port: int, password: string, name:string) =
         inherit LUServer(port,password,name)
-        let _zones : list<zone> = zones
-        member this.Zones with get() = _zones
+        let mutable _zones : list<zone> = List.empty
+        member this.Zones with get() = _zones and set(v) = _zones <- v
             
             
     module LUServer =
@@ -176,7 +177,11 @@ module rec Servers =
         let startServerAsync (server: WorldServer) (onReceive) (onNewConnection) (onDisconnect) =
             async{
                 WorldServer.startServer server onReceive onNewConnection onDisconnect
+                WorldServer.registerZones server
             } 
+           
+        let registerZones (worldServer : WorldServer) = 
+            worldServer.Zones <- List.ofSeq (Zone.registerZones())
             
 
         let handleWorldPacket (server : WorldServer)  (ipep : IPEndPoint) (data : byte[]) = 
@@ -414,24 +419,26 @@ module rec Servers =
 
             printfn "Sending detailed user info"
             worldServer.Server.Send(response,ipep)
-            let playerInfo : GameObject.GameObjectInformation = {
+            let playerInfo : Object.ObjectInformation = {
                 objectId = charId;
                 Lot = 1;
                 objectName = character.Name;
                 timeSinceCreation = uint32 0;
                 parent = None;
                 children = List.empty;
-                components = List.empty
+                components = Set.empty
             }
 
-            let player: GameObject.Player = {objectInfo = playerInfo}
-            let transform = Transform(zone.luzFile.SpawnPoint,zone.luzFile.SpawnRotation,player.objectInfo)
-            GameObject.addComponent (player.objectInfo) (transform)
+            let player: GameObject.player = GameObject.player(character, playerInfo)
+            let transform = Transform(zone.luzFile.SpawnPoint,zone.luzFile.SpawnRotation,player.ObjectInfo)
+
+            let components = Replica.getReplicaComponenents playerInfo.Lot playerInfo
+            let components = Set.ofList ((transform :> Component)::components)
+            Object.addComponents (player.ObjectInfo) (components)
             Zone.addPlayerToZone zone player
-            let construction = Replica.constructObject player.objectInfo
+            let construction = Replica.constructObject player
             
             worldServer.Server.Send(construction,ipep)
-            Zone.addPlayerToZone zone player
-            
+
             LUServer.sendGameMessage worldServer ipep {messageId = GameMessage.ServerDoneLoadingObjects;objectId = charId} (fun (serializer, message) -> printfn "Server done loading objects") 0
             LUServer.sendGameMessage worldServer ipep {messageId = GameMessage.PlayerReader;objectId = charId} (fun (serializer, message) -> printfn "Player ready") 0

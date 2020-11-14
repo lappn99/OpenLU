@@ -7,9 +7,7 @@ open System.IO.Compression
 open System.IO
 open RakDotNet.IO
 open OpenLU.Tools.Compression
-open System.Numerics
-open InfectedRose.Luz
-open System.Linq
+open OpenLU.Models
 module rec CoreTypes =
 
     module Enums =
@@ -58,12 +56,30 @@ module rec CoreTypes =
                   Body = BitStream(data.[8..]) }
         end
 
-
-    type Component(gameObject: GameObject.GameObjectInformation, name: string) = 
+   
+    type Component(gameObject: Object.ObjectInformation, name: string) = 
         let _gameObject = gameObject
         let _name = name
         member this.GameObject with get() = _gameObject
         member this.Name with get() = _name
+
+        interface IComparable<Component> with
+            member this.CompareTo other =
+                compare this.Name other.Name
+        interface IComparable with
+            member this.CompareTo object =
+                match object with 
+                    | :? Component as other -> (this :> IComparable<_>).CompareTo(other)
+                    | _ -> 1
+        interface IEquatable<Component> with
+            member this.Equals that =
+                this.Name = this.Name
+        override this.Equals other =
+            match other with
+               | :? Component as that -> (this :> IEquatable<_>).Equals other
+               | _ -> false
+        override this.GetHashCode() = hash this.Name
+        
 
     type Session = { UserId: int; UserKey: string }
 
@@ -139,26 +155,31 @@ module rec CoreTypes =
     module GameMessage =
         type GameMessageInfo ={ messageId: Enums.GameMessage; objectId: int64 }
 
-    module GameObject =
-        type GameObjectInformation = {
+    module Object =
+        type ObjectInformation = {
             objectId : int64;
             Lot : int32;
             objectName : string;
             timeSinceCreation : uint32;
-            parent : Option<GameObjectInformation>;
-            mutable children : List<GameObjectInformation>
-            mutable components : List<Component>
+            parent : Option<ObjectInformation>;
+            mutable children : List<ObjectInformation>
+            mutable components : Set<Component>
             
         }
+        
+        type object(objectInfo : CoreTypes.Object.ObjectInformation) =
+            let _objectInfo = objectInfo
+            member this.ObjectInfo = _objectInfo
 
-        type Player ={
-            objectInfo : GameObjectInformation
-        }
+            
+        
+
 
         let addComponent(gameObject) (comp : 'T) =
-            gameObject.components <- comp::gameObject.components
-        let addComponents(gameObject) (comps : 'T[]) =
-            gameObject.components <- List.append gameObject.components (List.ofArray comps)
+            gameObject.components <- gameObject.components.Add(comp)
+        let addComponents(gameObject) (comps : Set<'T>) =
+            gameObject.components <- Set.union gameObject.components comps
+            
 
     
 

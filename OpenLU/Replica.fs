@@ -9,36 +9,38 @@ open InfectedRose.Luz
 open System.IO
 open OpenLU.CoreTypes.Enums
 open System.Numerics
-open OpenLU.CoreTypes.GameObject
+open OpenLU.CoreTypes.Object
 open OpenLU.CoreTypes
 open System.Linq
 open System.Reflection
-open OpenLU.GameComponents
+open OpenLU.GameComponent
+open OpenLU.CoreTypes
 module rec Replica = 
     let random = new Random()
     let objectId()  = random.LongRandom(100000000000000000L, 999999999999999999L)
 
-    let getObjectComponenents lot parent =
+    let getReplicaComponenents lot parent =
         use cdContext = CDClientDatabase.getContext()
         let requiredComponents = cdContext.ComponentsRegistry.ToArray().Where(fun c-> int c.Id.Value = lot).Select(fun c -> int c.ComponentType.Value).ToArray()
         let assembly = Assembly.GetExecutingAssembly()
-        let componentTypes = assembly.GetTypes().Where(fun t-> t.Namespace = "OpenLU" && Attribute.GetCustomAttribute(t,typeof<ReplicaComponents.ComponentTypeAttribute>) <> null).ToArray()
+        let componentTypes = assembly.GetTypes().Where(fun t-> t.Namespace = "OpenLU" && Attribute.GetCustomAttribute(t,typeof<ReplicaComponent.ComponentTypeAttribute>) <> null).ToArray()
 
         seq{
             for componentType in componentTypes do
-                let attr = Attribute.GetCustomAttribute(componentType,typeof<ReplicaComponents.ComponentTypeAttribute>) 
-                let componentAttribute : ReplicaComponents.ComponentTypeAttribute = downcast attr
+                let attr = Attribute.GetCustomAttribute(componentType,typeof<ReplicaComponent.ComponentTypeAttribute>) 
+                let componentAttribute : ReplicaComponent.ComponentTypeAttribute = downcast attr
             
                 if requiredComponents.Contains(componentAttribute.ComponentType) then
                     let args = [|parent|]
                     yield  Activator.CreateInstance(componentType,args) :?> Component
-            } |> Array.ofSeq
+            } |> List.ofSeq
                 
                 
      
-    let constructObject<'T> (objectInfo : GameObjectInformation) = 
+    let constructObject<'T> (object : Object.object) = 
         let bitStream = BitStream()
-        
+        let objectInfo = object.ObjectInfo
+
         bitStream.WriteByte(byte ReplicaPacket.ReplicaConstruction)
         bitStream.WriteBit(true)
         bitStream.WriteUInt16(uint16 1)
@@ -67,14 +69,14 @@ module rec Replica =
         if objectInfo.children.Length > 0 then
             bitStream.WriteBit(true)
             bitStream.WriteUInt16(uint16 objectInfo.children.Length)
-            List.iter (fun (c : GameObjectInformation) -> bitStream.WriteInt64(c.objectId)) objectInfo.children
+            List.iter (fun (c : ObjectInformation) -> bitStream.WriteInt64(c.objectId)) objectInfo.children
         else
             bitStream.WriteBit(false)
 
         for comp in objectInfo.components do
-            if comp.GetType().IsSubclassOf(typeof<ReplicaComponents.ReplicaComponent>) then
-                let replicaComponent = comp :?> ReplicaComponents.ReplicaComponent
-                replicaComponent.Construct(bitStream)
+            match comp with
+                | :? ReplicaComponent.replicaComponent as replicaComponent -> replicaComponent.Construct(bitStream)
+                | _ -> ()
 
 
         bitStream.BaseBuffer

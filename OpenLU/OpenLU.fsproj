@@ -6,14 +6,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="testing.fsx" />
     <Content Include="zones.txt" />
+    <Compile Include="Attributes.fs" />
     <Compile Include="Tools.fs" />
     <Compile Include="LUDatabase.fs" />
     <Compile Include="LUResources.fs" />
     <Compile Include="Extensions.fs" />
     <Compile Include="CoreTypes.fs" />
-    <Compile Include="GameComponents.fs" />
+    <Compile Include="GameComponent.fs" />
+    <Compile Include="GameObject.fs" />
     <Compile Include="Replica.fs" />
     <Compile Include="Zone.fs" />
     <Compile Include="Services.fs" />

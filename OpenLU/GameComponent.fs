@@ -3,7 +3,8 @@ open OpenLU.CoreTypes
 open System.Numerics
 open RakDotNet
 open System.Reflection
-module GameComponents =
+open OpenLU.Attributes
+module GameComponent =
     
 
     type Transform(pos, rot, parent)=
@@ -18,21 +19,16 @@ module GameComponents =
         member this.Velocity with get() = _velocity
         member this.AngularVelocity with get() = _angularVelocity
 
-    module ReplicaComponents =
-        
-        type ReplicaComponent(parent,name) =
+    module ReplicaComponent =
+        type replicaComponent(parent,name) =
             inherit Component(parent,name)
             abstract member Construct : BitStream -> unit
             default this.Construct(bitStream) = printfn "Constructing %s" name
 
-        type ComponentTypeAttribute(componentType : int) = 
-            inherit System.Attribute()
-            member this.ComponentType with get() = componentType
-
         //TODO implement components
         [<ComponentType(4)>]
-        type CharacterComponent(parent) =
-            inherit ReplicaComponent(parent,"Character")
+        type characterComponent(parent) =
+            inherit replicaComponent(parent,"Character")
             let id =0
         
 

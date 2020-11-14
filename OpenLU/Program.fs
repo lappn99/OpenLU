@@ -17,7 +17,4 @@ let main argv =
     LegoUniverse.Start()
     
     Console.ReadKey() |> ignore
-    
-
-
     0
