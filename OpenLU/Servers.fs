@@ -147,6 +147,7 @@ module rec Servers =
                 }
                 let session = {UserKey = userkey; UserId = userId}
                 ServiceProvider.GetService<ISessionService>().NewSession(ipep,session)
+                printfn "New session from %s: %s" (ipep.ToString()) session.UserKey
             Console.WriteLine("Auth finished")
 
         let handShake (authServer : LUServer) (ipep: IPEndPoint) (packet : LUPacket) =
@@ -290,9 +291,9 @@ module rec Servers =
                     exactlyOne
             }
             let namesAsync = 
-                [resources.ReadTextAsync("names/minifigname_first.txt") ;
-                resources.ReadTextAsync("names/minifigname_last.txt")  ;
-                resources.ReadTextAsync("names/minifigname_last.txt") ] 
+                [LUResources.readTextAsync("names/minifigname_first.txt") ;
+                LUResources.readTextAsync("names/minifigname_last.txt")  ;
+                LUResources.readTextAsync("names/minifigname_last.txt") ] 
                 |> Async.Parallel
 
             use cdContext = CDClientDatabase.getContext()

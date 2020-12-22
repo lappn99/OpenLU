@@ -18,6 +18,12 @@ module LUResources =
         use bitReader = new BitReader(fileStream)
         luzFile.Deserialize(bitReader)
         luzFile
+
+    let readTextAsync path : Async<string> = async{
+        let resDir = getResourcePath()
+        let fullPath = sprintf "%s/%s" resDir path
+        let! text = File.ReadAllTextAsync fullPath |> Async.AwaitTask
+        return text} 
         
                 
                 

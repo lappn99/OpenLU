@@ -33,8 +33,12 @@ module rec Replica =
                 if requiredComponents.Contains(componentAttribute.ComponentType) then
                     
                     match componentType with
+                        | _ when componentType = typeof<ReplicaComponent.controllablePhysicsComponent> ->
+                            yield ReplicaComponent.controllablePhysicsComponent(parent :?> GameObject.player) :> Component.``component``
                         | _ when componentType = typeof<ReplicaComponent.characterComponent> -> 
                             yield ReplicaComponent.characterComponent(parent :?> GameObject.player) :> Component.``component``
+                        | _ when componentType = typeof<ReplicaComponent.renderComponent>-> 
+                            yield ReplicaComponent.renderComponent(parent :?> GameObject.player) :> Component.``component``
                         | _ -> ()
 
                    

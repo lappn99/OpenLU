@@ -5,9 +5,7 @@ open RakDotNet
 open System.Reflection
 open OpenLU.Attributes
 open OpenLU.GameObject
-module GameComponent =
-    
-
+module rec GameComponent =
     type transform(pos, rot, parent)=
         inherit Component.``component``(parent,"Transform")
         let _position : Vector3 = pos
@@ -16,7 +14,7 @@ module GameComponent =
         let _grounded = false
         let _angularVelocity = Vector3.Zero
         member this.Position with get() = _position
-        member this.Roation with get() = _rotation
+        member this.Rotation with get() = _rotation
         member this.Velocity with get() = _velocity
         member this.AngularVelocity with get() = _angularVelocity
 
@@ -26,8 +24,48 @@ module GameComponent =
             abstract member Construct : BitStream -> unit
             default this.Construct(bitStream) = printfn "Constructing %s" name
 
+        [<ComponentType(1,1)>]
+        type controllablePhysicsComponent(parent: GameObject.player) =
+            inherit replicaComponent(parent,"ControllablePhysics")
+            override this.Construct bitStream =
+                let transform : transform =  (Object.getComponent<GameComponent.transform> parent) :?> transform
+
+                bitStream.WriteBit(false) // Jetpack
+                bitStream.WriteBit(false) //flag
+                bitStream.WriteBit(false) //flag
+                bitStream.WriteBit(false) //flag
+                bitStream.WriteBit(false) //flag
+                bitStream.WriteBit(true) //transform
+                bitStream.WriteFloat(transform.Position.X)
+                bitStream.WriteFloat(transform.Position.Y)
+                bitStream.WriteFloat(transform.Position.Z)
+                bitStream.WriteFloat(transform.Rotation.X)
+                bitStream.WriteFloat(transform.Rotation.Y)
+                bitStream.WriteFloat(transform.Rotation.Z)
+                bitStream.WriteFloat(transform.Rotation.W)
+                bitStream.WriteBit(true)
+                bitStream.WriteBit(false)
+                bitStream.WriteBit(true) // velocity
+                bitStream.WriteFloat(transform.Velocity.X)
+                bitStream.WriteFloat(transform.Velocity.Y)
+                bitStream.WriteFloat(transform.Velocity.Z)
+                bitStream.WriteBit(true) // velocity
+                bitStream.WriteFloat(transform.AngularVelocity.X)
+                bitStream.WriteFloat(transform.AngularVelocity.Y)
+                bitStream.WriteFloat(transform.AngularVelocity.Z)
+                bitStream.WriteBit(false)
+               
+                 
+        [<ComponentType(2,3)>]
+        type renderComponent(parent : GameObject.player) =
+            inherit replicaComponent(parent,"RenderComponent")
+            override this.Construct bitStream = 
+                let character = parent.Character
+                bitStream.WriteUInt32(uint32 0)
+
+
         //TODO implement components
-        [<ComponentType(4,1)>]
+        [<ComponentType(4,2)>]
         type characterComponent(parent : GameObject.player) =
             inherit replicaComponent(parent,"Character")
             override this.Construct bitStream = 

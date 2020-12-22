@@ -149,6 +149,12 @@ module rec CoreTypes =
         type object(objectInfo : CoreTypes.Object.ObjectInformation) =
             let _objectInfo = objectInfo
             member this.ObjectInfo = _objectInfo
+        let getComponent<'T when 'T :> Component.``component``> (object : object) : Component.``component`` =
+            
+            let info = object.ObjectInfo
+            (Set.filter (fun comp -> comp.GetType() = typeof<'T> ) info.components) |> Seq.exactlyOne
+            
+            
 
             
     module Component =
