@@ -14,12 +14,15 @@ namespace OpenLU.DBContext
         public DbSet<GameModels.Character> Characters { get; set; }
         public DbSet<GameModels.InventoryItem> InventoryItems { get; set; }
 
-
+        public DbSet<GameModels.UserSession> UserSessions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<GameModels.User>().HasIndex(u => u.Username).IsUnique();
             modelBuilder.Entity<GameModels.User>().HasIndex(u => u.Password).IsUnique();
+            
+
+            modelBuilder.Entity<GameModels.UserSession>().Property(s => s.Id).ValueGeneratedNever();
 
             modelBuilder.Entity<GameModels.User>().HasData(new GameModels.User() { Password = "lego!", Username = "MrSnrub",Id = 1 }) ;
         }

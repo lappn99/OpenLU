@@ -2,6 +2,7 @@
 open System
 open System.Net
 open System.Numerics
+
 module rec GameModels = 
    
     type public User() =  class
@@ -13,6 +14,14 @@ module rec GameModels =
         
         end
 
+    type public UserSession() = class
+        member val Id = "" with get, set
+        member val UserId = 0 with get, set
+        
+        member val EndPoint = "" with get,set
+        member val Port = IPEndPoint.MinPort with get, set
+
+        end
         
     type public Character() = class
         member val Id  = (int64)0 with get,set

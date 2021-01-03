@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "OpenLU": {
+      "commandName": "Project",
+      "commandLineArgs": "-all"
+    },
+    "Auth": {
+      "commandName": "Project",
+      "commandLineArgs": "-auth 1001"
+    },
+    "World": {
+      "commandName": "Project",
+      "commandLineArgs": "-world 2002"
+    }
+  }
+}

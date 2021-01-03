@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="startMaster.fsx" />
     <Content Include="zones.txt" />
     <Compile Include="Attributes.fs" />
     <Compile Include="Tools.fs" />
@@ -18,11 +19,13 @@
     <Compile Include="Replica.fs" />
     <Compile Include="Zone.fs" />
     <Compile Include="Services.fs" />
-    <Compile Include="SessionCache.fs" />
+    <Compile Include="Session.fs" />
     <Compile Include="Servers.fs" />
     <Compile Include="LegoUniverse.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
+
+  <ItemGroup />
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.9" />

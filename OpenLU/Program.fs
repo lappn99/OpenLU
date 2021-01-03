@@ -11,10 +11,12 @@ open OpenLU.Services
 open OpenLU.LUResources
 open OpenLU.Replica
 [<EntryPoint>]
-let main argv =
+let main args =
     Services.ServiceProvider.RegisterService<ISessionService>(SessionCache())
     
-    LegoUniverse.Start()
+    let port = if args.Length > 1 then args.[1] |> int else Int32.MinValue
+
+    let result = LegoUniverse.Start args.[0] port
     
     Console.ReadKey() |> ignore
     0

@@ -139,15 +139,15 @@ module rec Servers =
             authServer.Server.Send(response,ipep)
             
             if(loginResult = LoginResponse.SUCCESS) then
-                let userId = query{
+                let user = query{
                     for user in users do
                         where(user.Username = username && user.Password = pwd)
-                        select user.Id
+                        select user
                         exactlyOne
                 }
-                let session = {UserKey = userkey; UserId = userId}
-                ServiceProvider.GetService<ISessionService>().NewSession(ipep,session)
-                printfn "New session from %s: %s" (ipep.ToString()) session.UserKey
+                
+                Session.newSession ipep userkey user
+                printfn "New session from %s: %s" (ipep.ToString()) userkey
             Console.WriteLine("Auth finished")
 
         let handShake (authServer : LUServer) (ipep: IPEndPoint) (packet : LUPacket) =
@@ -169,6 +169,7 @@ module rec Servers =
     module WorldServer = 
         
         let startServer(server: WorldServer) (onReceive) (onNewConnection) (onDisconnect)  = 
+            Session.initialze()
             Console.WriteLine("Starting: {0}",server.Name)
             server.Server <- RakNetServer(server.Port,server.Password)
             server.Server.add_PacketReceived(fun (ipep) (data) -> onReceive server ipep data)
@@ -207,17 +208,17 @@ module rec Servers =
 
         let handleDisconnect server ipep =
             LUServer.disconnection server ipep
-            let sessionService = ServiceProvider.GetService<ISessionService>()
-            let sessionKey = sessionService.FindByIp ipep
-            if sessionService.RemoveSession(ipep) then
-                printfn "Session ended: %s" sessionKey.Value.UserKey
+            
+            let sessionKey = Session.findByIp ipep
+            if Session.remove(ipep) then
+                printfn "Session ended: %s" sessionKey.Value.Id
 
         let userSessionInfo (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
             let username = packet.Body.ReadString(wide = true)
             let key = packet.Body.ReadString(wide = true)
             let hash = packet.Body.ReadString(32)
             
-            let session = ServiceProvider.GetService<ISessionService>().FindByIp(ipep)
+            let session = Session.findByIp(ipep)
             match session with 
                 | Some(session) -> Console.WriteLine("User logged in with session id: {0}", key)
                 | None -> Console.WriteLine("Session not found: {0}",key)
@@ -225,7 +226,7 @@ module rec Servers =
         let minifigListRequest (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
             let response = BitStream()
             
-            let session = ServiceProvider.GetService<ISessionService>().FindByIp(ipep)
+            let session = Session.findByIp(ipep)
             use db = LUDatabase.getContext()
             let minifigs = 
                 if session.IsSome then
@@ -278,7 +279,7 @@ module rec Servers =
 
         let minifigCreateRequest (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket) =
             
-            let session = ServiceProvider.GetService<ISessionService>().FindByIp ipep
+            let session = Session.findByIp ipep
             let newChar = new Character()
             let response = BitStream()
             let resources = ServiceProvider.GetService<IResourceService>()
@@ -359,7 +360,7 @@ module rec Servers =
             
 
         let sendWorldInfo (worldServer : WorldServer) ( ipep : IPEndPoint) (minifigId) =
-            let session = ServiceProvider.GetService<ISessionService>().FindByIp(ipep)
+            let session = Session.findByIp(ipep)
             
             use db = LUDatabase.getContext()
             let user =  db.Users.Where(fun u -> u.Id = session.Value.UserId).Single()
@@ -396,7 +397,7 @@ module rec Servers =
         let sendDetailedUserInfo (worldServer : WorldServer) ( ipep : IPEndPoint) (packet : LUPacket)=
             let zoneId = packet.Body.ReadUInt16()
             let zone = worldServer.Zones.Where(fun z -> z.zoneId = zoneId).Single()
-            let session = ServiceProvider.GetService<ISessionService>().FindByIp(ipep)
+            let session = Session.findByIp(ipep)
             let userId = session.Value.UserId
             let (charId,character) = using( LUDatabase.getContext()) (fun dbContext ->
                 let charId = dbContext.Users.Where(fun u -> u.Id = userId).SingleOrDefault().CurrentCharId
