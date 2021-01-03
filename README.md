@@ -50,3 +50,5 @@ See [openlu-setuptool](https://github.com/MashedTatoes/openlu-setuptool)
 
 ## Contribution
 Feel free to contribute anytime, all help is appreciated
+
+## [discord](https://discord.gg/g2yhhyJTj9) for those interested
