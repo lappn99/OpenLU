@@ -24,7 +24,7 @@ module rec GameComponent =
             abstract member Construct : BitStream -> unit
             default this.Construct(bitStream) = printfn "Constructing %s" name
 
-        [<ComponentType(1,1)>]
+        [<ComponentType(1,3)>]
         type controllablePhysicsComponent(parent: GameObject.player) =
             inherit replicaComponent(parent,"ControllablePhysics")
             override this.Construct bitStream =
@@ -56,7 +56,7 @@ module rec GameComponent =
                 bitStream.WriteBit(false)
                
                  
-        [<ComponentType(2,3)>]
+        [<ComponentType(2,25)>]
         type renderComponent(parent : GameObject.player) =
             inherit replicaComponent(parent,"RenderComponent")
             override this.Construct bitStream = 
@@ -65,7 +65,7 @@ module rec GameComponent =
 
 
         //TODO implement components
-        [<ComponentType(4,2)>]
+        [<ComponentType(4,11)>]
         type characterComponent(parent : GameObject.player) =
             inherit replicaComponent(parent,"Character")
             override this.Construct bitStream = 

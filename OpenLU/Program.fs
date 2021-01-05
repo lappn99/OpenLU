@@ -12,7 +12,7 @@ open OpenLU.LUResources
 open OpenLU.Replica
 [<EntryPoint>]
 let main args =
-    Services.ServiceProvider.RegisterService<ISessionService>(SessionCache())
+    
     
     let port = if args.Length > 1 then args.[1] |> int else Int32.MinValue
 

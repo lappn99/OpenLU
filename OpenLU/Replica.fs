@@ -24,14 +24,15 @@ module rec Replica =
         use cdContext = CDClientDatabase.getContext()
         let requiredComponents = cdContext.ComponentsRegistry.ToArray().Where(fun c-> int c.Id.Value = lot).Select(fun c -> int c.ComponentType.Value).ToArray()
         let assembly = Assembly.GetExecutingAssembly()
-        let componentTypes = assembly.GetTypes().Where(fun t-> t.Namespace = "OpenLU" && Attribute.GetCustomAttribute(t,typeof<ComponentTypeAttribute>) <> null).ToArray()
+        let componentTypes = assembly.GetTypes().Where(fun t-> t.Namespace = "OpenLU" && Attribute.GetCustomAttribute(t,typeof<ComponentTypeAttribute>) <> null).ToList() |> List.ofSeq |> List.sortWith(fun t1 t2 -> Attributes.compareComponentType (Attribute.GetCustomAttribute(t1,typeof<ComponentTypeAttribute>) :?> ComponentTypeAttribute) (Attribute.GetCustomAttribute(t2,typeof<ComponentTypeAttribute>) :?> ComponentTypeAttribute))
+        
+
 
         seq{
             for componentType in componentTypes do
                 let attr = Attribute.GetCustomAttribute(componentType,typeof<ComponentTypeAttribute>) 
                 let componentAttribute : ComponentTypeAttribute = downcast attr
                 if requiredComponents.Contains(componentAttribute.ComponentType) then
-                    
                     match componentType with
                         | _ when componentType = typeof<ReplicaComponent.controllablePhysicsComponent> ->
                             yield ReplicaComponent.controllablePhysicsComponent(parent :?> GameObject.player) :> Component.``component``

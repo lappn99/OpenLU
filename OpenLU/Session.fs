@@ -30,7 +30,7 @@ module Session =
     let findByIp (ip : IPEndPoint) =
         let sessions = LUDatabase.getContext().UserSessions
 
-        let session = sessions.Where(fun session -> session.EndPoint = ip.Address.ToString() && session.Port = ip.Port).First()
+        let session = sessions.Where(fun session -> session.EndPoint = ip.Address.ToString() && session.Port = ip.Port).FirstOrDefault()
         if session.Port = IPEndPoint.MinPort then None else Some(session)
     let remove ipep =
         use db = LUDatabase.getContext()
