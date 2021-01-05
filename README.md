@@ -37,6 +37,18 @@ Thanks to [Wincent01](https://github.com/Wincent01)  and [yuwui](https://github.
 See [openlu-setuptool](https://github.com/MashedTatoes/openlu-setuptool)
 
 
+### Use
+* Servers can be started indiviudally in their own process or at the same time in the same process
+* Command line arguments to start a server:
+  * `[-auth/-world] [port]`
+  * Example: `./OpenLU.exe -world 2002`
+* To start both in the same process simply put `-all` as the first argument, the port is not needed and will start the Auth and World servers in ports 1001 and 2002 respectively
+* All these variations are already setup in Visual Studio, they are under Debug>Profile in the properties for the 'OpenLU' project
+* startMaster.bat is located in the OpenLU project folder which will start both servers in seperate processes automatically
+* For debugging/developing I reccomend to just use the 'OpenLU' profile
+
 
 ## Contribution
 Feel free to contribute anytime, all help is appreciated
+
+## [discord](https://discord.gg/g2yhhyJTj9) for those interested
