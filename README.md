@@ -18,9 +18,8 @@ Thanks to [Wincent01](https://github.com/Wincent01)  and [yuwui](https://github.
 * Since its a personal project, and as of now im the sole developer do not expect work to be done on a consistent basis, there may be months long stretches where I dont do anywork on this and then come along and do a bunch in a weekend.
 
 ## TODO
-* Documentation
-* Comments
-* Load player in world
+* Implement components required for player
+* Support for LDF XML data type
 
 ## Installation
 

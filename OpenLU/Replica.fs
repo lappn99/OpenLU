@@ -40,6 +40,10 @@ module rec Replica =
                             yield ReplicaComponent.characterComponent(parent :?> GameObject.player) :> Component.``component``
                         | _ when componentType = typeof<ReplicaComponent.renderComponent>-> 
                             yield ReplicaComponent.renderComponent(parent :?> GameObject.player) :> Component.``component``
+                        | _ when componentType = typeof<ReplicaComponent.component107> ->
+                            yield ReplicaComponent.component107(parent :?> GameObject.player) :> Component.``component``
+                        | _  when componentType = typeof<ReplicaComponent.destructibleComponent> ->
+                            yield ReplicaComponent.destructibleComponent(parent :?> GameObject.player) :> Component.``component``
                         | _ -> ()
 
                    

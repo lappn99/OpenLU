@@ -130,3 +130,17 @@ module rec GameComponent =
                 bitStream.WriteUInt64(character.RacingSmashablesSmashed)
                 bitStream.WriteUInt64(character.RacesWon)
                 bitStream.WriteBit(false)
+
+        [<ComponentType(107,26)>]
+        type component107(parent : GameObject.player) =
+            inherit replicaComponent(parent,"Component 107")
+            override this.Construct bitStream = 
+                bitStream.WriteBit(false)
+
+        [<ComponentType(7,7)>]
+        type destructibleComponent(parent : GameObject.player) =
+            inherit replicaComponent(parent,"Destructible")
+            override this.Construct bitStream = 
+                bitStream.WriteBit(false)
+                bitStream.WriteBit(false)
+
